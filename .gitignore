@@ -74,7 +74,12 @@ crashlytics-build.properties
 /Assets/Fantasy\ Adventure\ Environment.meta
 
 /External/
-/Packages/
+/Packages/*
+!/Packages/manifest.json
+!/Packages/packages-lock.json
+!/Packages/vpm-manifest.json
+!/Packages/com.vrchat.core.*/
+
 
 
 ![Aa]ssets/Bakery/*
