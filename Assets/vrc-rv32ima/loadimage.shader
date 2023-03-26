@@ -53,6 +53,9 @@
 			{
 				uint2 coord = IN.vertex;
 				
+				// The system image is loaded into the beginning of the texture.
+				// The 
+				
 				return float4( coord&1,0,1 );
 			}
 
