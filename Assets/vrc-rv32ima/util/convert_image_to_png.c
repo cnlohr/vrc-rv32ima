@@ -21,7 +21,7 @@ int main()
 	w = FRAMING;
 	h = (imageLen + FRAMING-1) / FRAMING;
 	int s = stbi_write_png( "sysimage.png", w, h, 1, buffer, FRAMING );
-	printf( "ImageOut: %d\n", s ) ;
+	printf( "ImageOut: %d %d\n", s, imageLen ) ;
 	
 	f = fopen( "sixtyfourmb.dtb", "rb" );
 	if( !f ) { fprintf( stderr, "Error: Can't open sixtyfourmb.dtb\n" ); return -8; }
@@ -29,10 +29,10 @@ int main()
 	int dtbLen = ftell( f );
 	fseek( f, 0, SEEK_SET );
 	uint8_t * dtb = calloc( dtbLen + FRAMING, 1 );
-	fread( dtb, imageLen, 1, f );
+	fread( dtb, dtbLen, 1, f );
 
 	w = FRAMING;
 	h = (dtbLen + FRAMING-1) / FRAMING;
-	s = stbi_write_png( "dtbimage.png", w, h, 1, buffer, FRAMING );
-	printf( "dtbimage: %d\n", s ) ;
+	s = stbi_write_png( "dtbimage.png", w, h, 1, dtb, FRAMING );
+	printf( "dtbimage: %d %d\n", s, dtbLen ) ;
 }

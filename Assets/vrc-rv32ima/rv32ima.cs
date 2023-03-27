@@ -17,18 +17,22 @@ public class rv32ima : UdonSharpBehaviour
 
 	void Start()
 	{
-		VRCGraphics.Blit( null, systemMemory, loadImage, -1 ); 
+		computeMaterial.SetVector( "_SystemMemorySize", new Vector4( systemMemory.width, systemMemory.height, 0, 0 ) );
+		loadImage.SetVector( "_SystemMemorySize", new Vector4( systemMemory.width, systemMemory.height, 0, 0 ) );
+		systemWriter.SetVector( "_SystemMemorySize", new Vector4( systemMemory.width, systemMemory.height, 0, 0 ) );
+
+		VRCGraphics.Blit( mainTexture, systemMemory, loadImage, -1 ); 
 	}
 
 	void Update()
 	{
-	//	VRCGraphics.Blit( null, computeBuffer, computeMaterial, -1 ); 
-	//	VRCGraphics.Blit( null, systemMemory, systemWriter, -1 ); 
+		VRCGraphics.Blit( null, computeBuffer, computeMaterial, -1 ); 
+		VRCGraphics.Blit( null, systemMemory, systemWriter, -1 ); 
 	}
 
 	public override void Interact()
 	{
-		Debug.Log( "Loading System Memory\n" );
 		VRCGraphics.Blit( mainTexture, systemMemory, loadImage, -1 ); 
+		Debug.Log( "Loading System Memory\n" );
 	}
 }

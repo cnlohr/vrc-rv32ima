@@ -3,6 +3,7 @@
     Properties
     {
 		_ComputeBuffer( "Compute Buffer", 2D ) = "black" { }
+		_SystemMemorySize( "System Memory Size", Vector ) = ( 0, 0, 0, 0)
     }
     SubShader
     {
@@ -19,15 +20,10 @@
 			#pragma fragment frag
 			
 			#pragma target 5.0
-
-			texture2D <float4> _ComputeBuffer;
 			
-			#define FlexCRTSize float2(128,2)
+			#include "vrc-rv32ima.cginc"
 
-			float4 FlexCRTCoordinateOut( uint2 coordOut )
-			{
-				return float4((coordOut.xy*2-FlexCRTSize+1)/FlexCRTSize, 0.5, 1 );
-			}
+			texture2D <uint4> _ComputeBuffer;
 
 			struct appdata
 			{
@@ -43,12 +39,12 @@
 			struct g2f
 			{
 				float4 vertex		: SV_POSITION;
-				float4 color		: TEXCOORD0;				
+				uint4  color		: TEXCOORD0;				
 			};
 
 			v2g vert(appdata IN)
 			{
-				v2g OUT;				
+				v2g OUT;
 				OUT.batchID = IN.vertexID;
 				return OUT;
 			}
@@ -58,14 +54,24 @@
 			void geo( point v2g input[1], inout PointStream<g2f> stream,
 				uint instanceID : SV_GSInstanceID, uint geoPrimID : SV_PrimitiveID )
 			{
+				// Just FYI there are two geoPrimID coming in here with graphics.blit.
 				int batchID = input[0].batchID;
+				//if( geoPrimID > 0 || instanceID > 0 ) return;
+
 				g2f o;
 				for( int i = 0; i < 128; i++ )
 				{
-					uint PixelID = i;
-					uint2 coordOut = uint2( i, 0 );
-					o.vertex = FlexCRTCoordinateOut( coordOut );
-					o.color = uint4( 0xffffffff, 0x80000000, 0x80000000, 0x80000000 );
+					uint4 data = _ComputeBuffer[uint2(i,0)];
+					uint4 addr = _ComputeBuffer[uint2(i,1)]; // Must be superword aligned.
+					
+					if( addr.x < MEMORY_BASE ) return;
+					uint superword = ((addr.x - MEMORY_BASE)/16);
+					uint2 outsize = _SystemMemorySize;
+					uint2 coordOut = uint2( superword % outsize.x, superword / outsize.x );
+
+					//coordOut = uint2( i, i );
+					o.vertex = ClipSpaceCoordinateOut( coordOut, _SystemMemorySize.xy );
+					o.color = data;
 					stream.Append(o);
 				}
 			}

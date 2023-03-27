@@ -3,6 +3,7 @@
     Properties
     {
 		_MainSystemMemory( "Main System Memory", 2D ) = "black" { }
+		_SystemMemorySize( "System Memory Size", Vector ) = ( 0, 0, 0, 0)
     }
     SubShader
     {
@@ -19,36 +20,32 @@
 			#pragma fragment frag
 			
 			#pragma target 5.0
+			
+			
+			#include "vrc-rv32ima.cginc"
 
 			texture2D <float4> _MainSystemMemory;
-			
-			#define FlexCRTSize float2(128,2)
-
-			float4 FlexCRTCoordinateOut( uint2 coordOut )
-			{
-				return float4((coordOut.xy*2-FlexCRTSize+1)/FlexCRTSize, 0.5, 1 );
-			}
 
 			struct appdata
 			{
 				uint	vertexID	: SV_VertexID;
 			};
-			
+
 			struct v2g
 			{
 				//float4 vertex	: SV_POSITION;
-				uint batchID		: TEXCOORD2;
+				uint batchID    : TEXCOORD2;
 			};
 			
 			struct g2f
 			{
-				float4 vertex		: SV_POSITION;
-				float4 color		: TEXCOORD0;				
+				float4 vertex : SV_POSITION;
+				uint4 color   : TEXCOORD0;				
 			};
 
 			v2g vert(appdata IN)
 			{
-				v2g OUT;				
+				v2g OUT;
 				OUT.batchID = IN.vertexID;
 				return OUT;
 			}
@@ -58,14 +55,14 @@
 			void geo( point v2g input[1], inout PointStream<g2f> stream,
 				uint instanceID : SV_GSInstanceID, uint geoPrimID : SV_PrimitiveID )
 			{
-				int batchID = input[0].batchID;
+				int batchID = input[0].batchID; // Should always be 0?
 				g2f o;
 				for( int i = 0; i < 128; i++ )
 				{
 					uint PixelID = i;
-					uint2 coordOut = uint2( i, 0 );
-					o.vertex = FlexCRTCoordinateOut( coordOut );
-					o.color = uint4( 0xffffffff, 0x80000000, 0x80000000, 0x80000000 );
+					uint2 coordOut = uint2( i, geoPrimID );
+					o.vertex = ClipSpaceCoordinateOut( coordOut, float2(128,2) );
+					o.color = geoPrimID?(0x83ff8000+i*16):0xf1234567;
 					stream.Append(o);
 				}
 			}

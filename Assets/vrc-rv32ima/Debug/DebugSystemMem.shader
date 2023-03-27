@@ -32,7 +32,7 @@
 				int charno = uv.x/4;
 				int row = uv.y/7;
 				uint dig = (val[3-row] >> (28-charno*4))&0xf;
-				return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 15, 0.0);
+				return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
 			}
 
 			struct appdata
