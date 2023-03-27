@@ -1,36 +1,33 @@
 ﻿Shader "Unlit/DebugSystemMem"
 {
-    Properties
-    {
-        _SystemMemory ("SystemMemory", 2D) = "white" {}
-    }
-    SubShader
-    {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+	Properties
+	{
+		_SystemMemory ("SystemMemory", 2D) = "white" {}
+	}
+	SubShader
+	{
+		Tags { "RenderType"="Opaque" }
 
-        Pass
-        {
-			
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-			
-            #pragma multi_compile_fog
+		Pass
+		{			
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
 
-            #include "UnityCG.cginc"
+			#pragma multi_compile_fog
+
+			#pragma target 5.0
+
+			#include "UnityCG.cginc"
 
 			#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
 
-			UNITY_INSTANCING_BUFFER_START(Props)
-			UNITY_INSTANCING_BUFFER_END(Props)
-			
-            Texture2D<uint4> _SystemMemory;
-            float4 _SystemMemory_TexSize;
+			Texture2D<uint4> _SystemMemory;
+			float4 _SystemMemory_TexSize;
+			float4 _SystemMemory_ST;
 
 			float PrintHex( uint4 val, float2 uv )
 			{
-				return uv.x/5;
 				uv *= float2( 32, 7*4 );
 				int charno = uv.x/4;
 				int row = uv.y/7;
@@ -38,40 +35,35 @@
 				return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 15, 0.0);
 			}
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
+			struct appdata
+			{
+				float4 vertex : POSITION;
+				float2 uv : TEXCOORD0;
+			};
 
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
-            };
+			struct v2f
+			{
+				float4 vertex : SV_POSITION;
+				float2 uv : TEXCOORD0;
+				UNITY_FOG_COORDS(1)
+			};
 
+			v2f vert (appdata v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.uv = v.uv;
+				UNITY_TRANSFER_FOG(o,o.vertex);
+				return o;
+			}
 
-            v2f vert (appdata v)
-            {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
-                UNITY_TRANSFER_FOG(o,o.vertex);
-                return o;
-            }
-
-            float4 frag (v2f i) : SV_Target
-            {
-                // sample the texture
-				return ( 1.0 ).xxxx;
-                fixed4 col = PrintHex( _SystemMemory.Load( uint3( 0, 0, 0 ) ), i.uv );
-                // apply fog
-				col = 1.0;
-                UNITY_APPLY_FOG(i.fogCoord, col);
-                return col;
-            }
-            ENDCG
-        }
-    }
+			float4 frag (v2f i) : SV_Target
+			{
+				float4 col = PrintHex( _SystemMemory.Load( uint3( 0, 0, 0 ) ), i.uv );
+				UNITY_APPLY_FOG(i.fogCoord, col);
+				return col;
+			}
+			ENDCG
+		}
+	}
 }

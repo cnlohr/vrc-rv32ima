@@ -54,7 +54,18 @@
 				uint2 coord = IN.vertex;
 				
 				// The system image is loaded into the beginning of the texture.
-				// The 
+				
+				// Input source textures are always 1kB wide.
+
+				uint TargetWidthBytes = _ScreenParams.x * 4 * 4;
+				
+				uint SystemImageBytes = (_SystemImage_TexelSize.z * _SystemImage_TexelSize.w);
+				uint SystemImageOHeight = ( SystemImageBytes + TargetWidthBytes - 1 ) / TargetWidthBytes;
+				
+				if( coord < SystemImageOHeight )
+				{
+					
+				}
 				
 				return float4( coord&1,0,1 );
 			}
