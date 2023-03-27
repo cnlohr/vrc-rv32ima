@@ -349,7 +349,7 @@ MINIRV32_STEPPROTO
 				case 0x73: // Zifencei+Zicsr  (0b1110011)
 				{
 					uint32_t csrno = ir >> 20;
-					int microop = ( ir >> 12 ) & 0x7;
+					uint32_t microop = ( ir >> 12 ) & 0x7;
 					if( (microop & 3) ) // It's a Zicsr function.
 					{
 						int rs1imm = (ir >> 15) & 0x1f;
