@@ -15,6 +15,8 @@ public class rv32ima : UdonSharpBehaviour
 	
 	public Texture       mainTexture;
 
+	private int frames;
+
 	void Start()
 	{
 		computeMaterial.SetVector( "_SystemMemorySize", new Vector4( systemMemory.width, systemMemory.height, 0, 0 ) );
@@ -28,11 +30,12 @@ public class rv32ima : UdonSharpBehaviour
 	{
 		VRCGraphics.Blit( null, computeBuffer, computeMaterial, -1 ); 
 		VRCGraphics.Blit( null, systemMemory, systemWriter, -1 ); 
+		frames++;
 	}
 
 	public override void Interact()
 	{
 		VRCGraphics.Blit( mainTexture, systemMemory, loadImage, -1 ); 
-		Debug.Log( "Loading System Memory\n" );
+		Debug.Log( "Loading System Memory: " + frames );
 	}
 }

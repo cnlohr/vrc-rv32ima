@@ -4,6 +4,8 @@
 //#define SYSTEX_SIZE (2048,2048)
 
 #define MEMORY_BASE 0x80000000
+#define MEMORY_SIZE 0x3FF8000
+
 float4 _SystemMemorySize;
 
 

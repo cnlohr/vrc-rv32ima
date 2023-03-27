@@ -62,9 +62,9 @@
 				float2 uv = i.uv;
 				uv.x *= 2;
 				uv.y *= 24;
-				int col = uv.x;
-				int row = 24 - uv.y;
-				int group = row * 2 + col;
+				uint col = uv.x;
+				uint row = 24 - uv.y;
+				uint group = row * 2 + col;
 				
 				uv.x = frac( uv );
 				float4 color = 0;
@@ -144,15 +144,65 @@
 							uint4( __m, __c, __a, __COLON ),
 							uint4( __e, __x, __t, __COLON ),
 						};
+						float3 tcol[] = {
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 1.0, 1.0, 1.0 ),
+							float3( 0.0, 0.0, 1.0 ),
+							float3( 1.0, 1.0, 1.0 ),
+							float3( 1.0, 1.0, 1.0 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 1.0, 0.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 1.0, 0.0, 1.0 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 0.0, 0.6, 0.6 ),
+							float3( 1.0, 0.0, 0.0 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 0.4, 0.4, 0.4 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.0, 1.0, 0.0 ),
+							float3( 0.0, 0.8, 0.0 ) };
 						uv *= float2( 4, 7 );
-						color = PrintChar( label[group][char], uv, 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+						color = float4( tcol[group], 1.0 ) * PrintChar( label[group][char], uv, 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
 					}
 					else
 					{
 						uint mcell = group/4;
 						uint4 cell = _SystemMemory.Load( uint3( mcell, _SystemMemory_TexelSize.w-1, 0 ) );
-						
-						color = PrintHex( cell[group%4], frac(uv) );
+						if( uv.x > 1 )
+							color = 0;
+						else
+							color = PrintHex( cell[group%4], frac(uv) );
 					}
 				}
 				UNITY_APPLY_FOG(i.fogCoord, color);
