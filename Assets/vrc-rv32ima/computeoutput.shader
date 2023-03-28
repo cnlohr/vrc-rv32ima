@@ -88,10 +88,11 @@
 			// todo: review all this.
 			void StoreMemInternalRB( uint ptr, uint val )
 			{
+				int i;
+				uint blockno = ptr / 16;
 				// ptr will be aligned.
 				// perform a 4-byte store.
 				uint hash = blockno & 0x7f;
-				uint blockno = ptr / 16;
 				uint4 block;
 				uint ct = 0;
 				// Cache lines are 8-deep, by 16 bytes, with 128 possible cache addresses.
@@ -112,7 +113,7 @@
 					// We have filled a cache line.  We must cleanup without any other stores.
 					need_to_flush_runlet = 1;
 				}
-				cachesetaddy[i] = blockno;
+				cachesetsaddy[i] = blockno;
 				block = _MainSystemMemory[uint2(blockno%SYSTEX_WIDTH,blockno/SYSTEX_WIDTH)];
 				block[(ptr&0xf)>>2] = val;
 				cachesetsdata[i] = block;
@@ -154,7 +155,9 @@
 						// Must be split into two writes.
 						uint ret0 = LoadMemInternalRB( ptr & (~3) );
 						uint ret1 = LoadMemInternalRB( (ptr & (~3)) + 4 );
-						return (ret0 >> (remo*8)) | (ret1<<((4-remo)*8)); // XXX TODO:TESTME!!!
+						uint loaded = (ret0 >> (remo*8)) | (ret1<<((4-remo)*8));
+						uint mask = ((1<<(len*8))-1;
+						loaded = (loaded & (~mask)) | ( val & mask );
 						// XXX TODO
 					}
 					else
