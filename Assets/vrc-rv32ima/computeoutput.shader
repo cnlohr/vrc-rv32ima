@@ -69,7 +69,6 @@
 				g2f o;
 				uint i;
 				cache_usage = 0;
-				uint pixelOutputID = 0;
 				uint elapsedUs = 1;
 
 				// Load state in from main ram.
@@ -88,6 +87,21 @@
 				state[pcreg] = 0x80000000;
 
 				uint s = MiniRV32IMAStep( elapsedUs );
+
+				uint pixelOutputID = 0;
+
+				for( i = 0; i < 12; i++ )
+				{
+
+					uint2 coordOut = uint2( pixelOutputID, 0 );
+					o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
+					o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, 0, 0, 0);
+					stream.Append(o);
+					coordOut = uint2( pixelOutputID++, 1 );
+					o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
+					o.color = uint4( state[i*4+0], state[i*4+1], state[i*4+2], state[i*4+3] );;
+					stream.Append(o);
+				}
 				
 				for( i = 0; i < CACHE_BLOCKS; i++ )
 				{
@@ -101,24 +115,6 @@
 						coordOut = uint2( pixelOutputID++, 1 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
 						o.color = cachesetsdata[i];
-						stream.Append(o);
-					}
-				}
-				
-
-				{
-					uint4 statealias[12];
-					for( i = 0; i < 12; i++ )
-					{
-						statealias[i] = uint4( state[i*4+0], state[i*4+1], state[i*4+2], state[i*4+3] );
-
-						uint2 coordOut = uint2( pixelOutputID, 0 );
-						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, 0, 0, 0);
-						stream.Append(o);
-						coordOut = uint2( pixelOutputID++, 1 );
-						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-						o.color = statealias[i];
 						stream.Append(o);
 					}
 				}

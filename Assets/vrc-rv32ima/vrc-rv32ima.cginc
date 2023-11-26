@@ -67,7 +67,7 @@ static uint state[48] = (uint[48])0;
 #define MAXICOUNT    1024
 #define MAX_FCNT     50
 #define CACHE_BLOCKS 128
-#define CACHE_N_WAY  2
+#define CACHE_N_WAY  1
 
 #define INT32_MIN -2147483648
 #define AS_SIGNED(val) (asint(val))

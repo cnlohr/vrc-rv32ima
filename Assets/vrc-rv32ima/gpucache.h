@@ -35,7 +35,6 @@
 			uint LoadMemInternalRB( uint ptr )
 			{
 				uint remainder4 = ((ptr&0xc)>>2);
-				ptr -= MEMORY_BASE;
 				uint blockno = ptr / 16;
 				uint blocknop1 = (ptr >> 4)+1;
 				uint hash = (blockno % (CACHE_BLOCKS/CACHE_N_WAY)) * CACHE_N_WAY;
@@ -76,7 +75,6 @@
 			// Store mem internal word (Only use if guaranteed word-alignment)
 			void StoreMemInternalRB( uint ptr, uint val )
 			{
-				ptr -= MEMORY_BASE;
 				uint ptrleftover = (val & 0xc)>>2;
 				//printf( "STORE %08x %08x\n", ptr, val );
 				uint blockno = ptr >> 4;  
@@ -145,7 +143,7 @@
 			{
 				uint lenx8mask = ((uint)(-1)) >> (((4-len) & 3) * 8);
 				uint remo = ptr & 3;
-				if( remo )
+				if( remo > 0 )
 				{
 					if( len > 4 - remo )
 					{
