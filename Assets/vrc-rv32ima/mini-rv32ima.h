@@ -146,6 +146,8 @@ MINIRV32_STEPPROTO
 		pc -= 4;
 	}
 	else // No timer interrupt?  Execute a bunch of instructions.
+	{
+	[loop]
 	for( int icount = 0; icount < count; icount++ )
 	{
 		uint32_t ir = 0;
@@ -483,8 +485,8 @@ MINIRV32_STEPPROTO
 							case 0: rs2 += rval; break; //AMOADD.W (0b00000)
 							case 4: rs2 ^= rval; break; //AMOXOR.W (0b00100)
 							case 12: rs2 &= rval; break; //AMOAND.W (0b01100)
-							case 16: rs2 |= rval; break; //AMOOR.W (0b01000)
-							case 32: rs2 = ((int32_t)rs2<(int32_t)rval)?rs2:rval; break; //AMOMIN.W (0b10000)
+							case 8: rs2 |= rval; break; //AMOOR.W (0b01000)
+							case 16: rs2 = ((int32_t)rs2<(int32_t)rval)?rs2:rval; break; //AMOMIN.W (0b10000)
 							case 20: rs2 = ((int32_t)rs2>(int32_t)rval)?rs2:rval; break; //AMOMAX.W (0b10100)
 							case 24: rs2 = (rs2<rval)?rs2:rval; break; //AMOMINU.W (0b11000)
 							case 28: rs2 = (rs2>rval)?rs2:rval; break; //AMOMAXU.W (0b11100)
@@ -494,7 +496,7 @@ MINIRV32_STEPPROTO
 					}
 					break;
 				}
-				default: trap = (2+1); // Fault: Invalid opcode.
+				default: trap = (2+1); break; // Fault: Invalid opcode.
 			}
 
 			// If there was a trap, do NOT allow register writeback.
@@ -510,6 +512,7 @@ MINIRV32_STEPPROTO
 		MINIRV32_POSTEXEC( pc, ir, trap );
 
 		pc += 4;
+	}
 	}
 
 	// Handle traps and interrupts.
