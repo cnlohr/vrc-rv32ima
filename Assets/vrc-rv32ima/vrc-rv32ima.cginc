@@ -54,7 +54,7 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define mcause 46
 #define extraflags 47
 
-static uint state[48];
+static uint state[48] = (uint[48])0;
 
 #define CSR( x ) state[x]
 #define SETCSR( x, val ) { state[x] = val; }
@@ -73,7 +73,7 @@ static uint state[48];
 #define AS_SIGNED(val) (asint(val))
 #define AS_UNSIGNED(val) (asuint(val))
 
-#define MainSystemAccess( blockno ) _MainSystemMemory.Load( int3( blockno % SYSTEX_SIZE_X, blockno / SYSTEX_SIZE_X, 0 ) )
+#define MainSystemAccess( blockno ) _MainSystemMemory[uint2( (blockno) % SYSTEX_SIZE_X, (blockno) / SYSTEX_SIZE_X)]
 #define MINIRV32_STEPPROTO MINIRV32_DECORATE int32_t MiniRV32IMAStep( MINIRV32_STATE_DEFINTION uint32_t elapsedUs )
 
 #define count _MaxICount

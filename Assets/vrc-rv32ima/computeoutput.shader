@@ -19,7 +19,8 @@
 			#pragma vertex vert
 			#pragma geometry geo
 			#pragma fragment frag
-			
+			#pragma exclude_renderers d3d11_9x
+            #pragma exclude_renderers d3d9     // Just tried adding these because of a bgolus post to test,has no impact.
 			#pragma target 5.0
 			
 			
@@ -60,50 +61,34 @@
 			void geo( point v2g input[1], inout PointStream<g2f> stream,
 				uint instanceID : SV_GSInstanceID, uint geoPrimID : SV_PrimitiveID )
 			{
+				#ifdef UNITY_SINGLE_PASS_STEREO
+				return;
+				#endif
 				int batchID = input[0].batchID; // Should always be 0?
-				
-				int i;
-				for( i = 0; i < CACHE_BLOCKS; i++ )
-				{
-					cachesetsaddy[i] = 0;
-					cachesetsdata[i] = 0;
-				}
 
 				g2f o;
+				uint i;
 				cache_usage = 0;
-				pixelOutputID = 0;
-				uint Levels_ignored;
+				uint pixelOutputID = 0;
 				uint elapsedUs = 1;
-				state = (uint[48])0;
-
 
 				// Load state in from main ram.
 				uint4 v;
 				{
-					uint4 statealias[12];
 					for( i = 0; i < 12; i++ )
 					{
-						statealias[i] = _MainSystemMemory.Load( uint3( i, SYSTEX_SIZE_Y-1, 0 ) );
-					}
-					
-					for( i = 0; i < 12; i++ )
-					{
-						v = statealias[i];
+						uint4 v = _MainSystemMemory.Load( uint3( i, SYSTEX_SIZE_Y-1, 0 ) );
 						state[i*4+0] = v.x;
 						state[i*4+1] = v.y;
 						state[i*4+2] = v.z;
 						state[i*4+3] = v.w;
 					}
 				}
-				
-								
-								state[pcreg] = 0x80000000;
+
+				state[pcreg] = 0x80000000;
 
 				uint s = MiniRV32IMAStep( elapsedUs );
 				
-				
-#if 1
-				[unroll]
 				for( i = 0; i < CACHE_BLOCKS; i++ )
 				{
 					uint a = cachesetsaddy[i];
@@ -115,37 +100,11 @@
 						stream.Append(o);
 						coordOut = uint2( pixelOutputID++, 1 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-						o.color = uint4( cachesetsdata[i*4+0], cachesetsdata[i*4+1], cachesetsdata[i*4+2], cachesetsdata[i*4+3] );
+						o.color = cachesetsdata[i];
 						stream.Append(o);
 					}
 				}
 				
-#else
-				for( i = 0; i < MAX_FCNT; i++ )
-				{
-					uint a = emitblocks[i];
-
-					//EmitGeo( a, cachesetsdata[i] );
-					uint2 coordOut = uint2( pixelOutputID, 0 );
-					o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-					o.color = uint4(a, 0, 0, 0);
-					stream.Append(o);
-
-					int j = 0;
-					uint idx = (a%(CACHE_BLOCKS/CACHE_N_WAY))*CACHE_N_WAY;
-					for( j = 0; j < CACHE_N_WAY; j++ )
-					{
-						if( cachesetsaddy[j+idx] == a )
-						{
-							coordOut = uint2( pixelOutputID++, 1 );
-							o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-							o.color = cachesetsdata[j+idx];
-							stream.Append(o);
-							break;
-						}
-					}
-				}
-#endif
 
 				{
 					uint4 statealias[12];

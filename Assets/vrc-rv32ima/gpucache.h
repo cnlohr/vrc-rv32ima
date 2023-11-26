@@ -1,11 +1,40 @@
-			static uint  cachesetsdata[CACHE_BLOCKS*4] = (uint[CACHE_BLOCKS*4])0;
+			static uint4 cachesetsdata[CACHE_BLOCKS] = (uint4[CACHE_BLOCKS])0;
 			static uint  cachesetsaddy[CACHE_BLOCKS] = (uint[CACHE_BLOCKS])0;
-			static uint  emitblocks[MAX_FCNT] = (uint[MAX_FCNT])0;
 			static uint  cache_usage = 0;
+			
+			uint U4Select( uint4 v, uint w )
+			{
+				if( w >= 2 )
+				{
+					if( w == 4 ) return v.w;
+					else return v.z;
+				}
+				else
+				{
+					if( w == 1 ) return v.y;
+					else return v.x;
+				}
+			}
+
+			void SetField( inout uint4 vv, uint val, uint w )
+			{
+				if( w >= 2 )
+				{
+					if( w == 4 ) vv.w = val;
+					else vv.z = val;
+				}
+				else
+				{
+					if( w == 1 ) vv.y = val;
+					else vv.x = val;
+				}
+				//SetField( cachesetsdata[ hash ], val, ptrleftover );
+			}
 
 			// Only use if aligned-to-4-bytes.
 			uint LoadMemInternalRB( uint ptr )
 			{
+				uint remainder4 = ((ptr&0xc)>>2);
 				ptr -= MEMORY_BASE;
 				uint blockno = ptr / 16;
 				uint blocknop1 = (ptr >> 4)+1;
@@ -19,19 +48,13 @@
 					if( ct == blocknop1 )
 					{
 						// Found block.
-						return cachesetsdata[(i+hash)*4 + ((ptr&0xc)>>2)];
+						return U4Select( cachesetsdata[(i+hash)], remainder4 );
 					}
 					else if( ct == 0 )
 					{
 						// else, no block found. Read data.
 						uint4assign( block, MainSystemAccess( blockno ) );
-						switch( ((ptr&0xc)>>2) )
-						{
-							case 0: return block.x;
-							case 1: return block.y;
-							case 2: return block.z;
-							case 3: return block.w;
-						}
+						return U4Select( block, remainder4 );
 					}
 				}
 
@@ -54,8 +77,9 @@
 			void StoreMemInternalRB( uint ptr, uint val )
 			{
 				ptr -= MEMORY_BASE;
+				uint ptrleftover = (val & 0xc)>>2;
 				//printf( "STORE %08x %08x\n", ptr, val );
-				uint blockno = ptr >> 4;
+				uint blockno = ptr >> 4;  
 				uint blocknop1 = blockno+1;
 				// ptr will be aligned.
 				// perform a 4-byte store.
@@ -68,15 +92,25 @@
 				for( ; hash < hashend; hash++ )
 				{
 					ct = cachesetsaddy[hash];
-					if( ct == 0 ) break;
+					if( ct == 0 )
+					{
+						ct = cachesetsaddy[hash] = blocknop1;
+						uint4assign( cachesetsdata[hash], MainSystemAccess( blockno ) );
+
+						// Make sure there's enough room to flush processor state
+						if( hash == hashend-1 )
+						{
+							cache_usage = MAX_FCNT;
+						}
+					}
 					if( ct == blocknop1 )
 					{
 						// Found block.
-						cachesetsdata[ hash*4+((ptr&0xc)>>2) ] = val;
+						SetField( cachesetsdata[ hash ], val, ptrleftover );
 						return;
 					}
 				}
-				
+#if 0				
 				// NOTE: It should be impossible for i to ever be or exceed 1024.
 				// We catch it early here.
 				if( hash == hashend )
@@ -95,17 +129,15 @@
 					return;
 				}
 				cachesetsaddy[hash] = blocknop1;
-				uint4assign( block, MainSystemAccess( blockno ) );
-				cachesetsdata[hash*4+0] = block.x;
-				cachesetsdata[hash*4+1] = block.y;
-				cachesetsdata[hash*4+2] = block.z;
-				cachesetsdata[hash*4+3] = block.w;
-				emitblocks[cache_usage++] = blocknop1;
+				uint4assign( cachesetsdata[hash], MainSystemAccess( blockno ) );
+				SetField( cachesetsdata[ hash ], val, ptrleftover );
+
 				// Make sure there's enough room to flush processor state
 				if( hash == hashend-1 )
 				{
 					cache_usage = MAX_FCNT;
 				}
+				#endif
 			}
 
 			// NOTE: len does NOT control upper bits.

@@ -305,7 +305,6 @@ MINIRV32_STEPPROTO
 					}
 					break;
 				}
-#if 1
 				case 0x13: // Op-immediate 0b0010011
 				case 0x33: // Op           0b0110011
 				{
@@ -500,7 +499,6 @@ MINIRV32_STEPPROTO
 					}
 					break;
 				}
-#endif
 				default: trap = (2+1); break; // Fault: Invalid opcode.
 			}
 
