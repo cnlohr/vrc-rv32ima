@@ -103,7 +103,7 @@
 				uint topbase = _SystemMemorySize.y - 1 - DTBImageOHeight;
 				if( coord.y >= topbase )
 				{
-					if( coord.y == _SystemMemorySize.y - 1 )
+					if( coord.y == (uint)_SystemMemorySize.y - 1 )
 					{
 						//CPU Core Info Area
 						/*
@@ -113,16 +113,16 @@
 							mscratch, mtvec, mie, mip
 							mepc, mtval, mcause, extraflags
 						*/
-						uint pc = 0x80000000;
+						uint lpc = 0x80000000;
 						uint dtb_address = 0x80000000 + TargetWidthBytes * topbase;
 	
 						// Each color is 4 regs.
 						if( coord.x == 8 )
 							return uint4(
-								0x80000000, // PC (Image offset)
+								lpc,        // PC (Image offset)
 								0x00000000, // mstatus
 								0x00000000, // cyclel
-								0x00000000 // cycleh
+								0x00000000  // cycleh
 							);
 						else if( coord.x == 2 )
 							return uint4(
@@ -136,7 +136,7 @@
 								0x00000000, // mepc
 								0x00000000, // mtval
 								0x00000000, // mcause
-								0x00000003 // machine mode.
+								0x00000003  // machine mode.
 							);
 						else
 							return 0x00000000;

@@ -5,12 +5,12 @@
 
 Texture2D<uint4> _MainSystemMemory;
 
-#define MINI_RV32_RAM_SIZE (1024*1024*16)
+#define MINI_RV32_RAM_SIZE (1024*1024*16 - SYSTEX_SIZE_X*16)
 #define SYSTEX_SIZE_X 1024
 #define SYSTEX_SIZE_Y 1024
 
 #define MEMORY_BASE 0x80000000
-#define MEMORY_SIZE 0x3FF8000
+#define MEMORY_SIZE (MINI_RV32_RAM_SIZE)
 
 float4 _SystemMemorySize;
 
@@ -31,20 +31,41 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 )
 #define MINIRV32_OTHERCSR_WRITE( csrno, writeval )
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
-#define MINIRV32_STATE_DEFINTION MiniRV32IMAState state,
+#define MINIRV32_STATE_DEFINTION
 #define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = 0;
 
 #define MINIRV32_CUSTOM_INTERNALS
-#define CSR( x ) state.x
-#define SETCSR( x, val ) { state.x = val; }
-#define REG( x ) state.regs[x]
-#define REGSET( x, val ) { state.regs[x] = val; }
+#define MINIRV32_CUSTOM_STATE
+
+#define pcreg 32
+#define mstatus 33
+#define cyclel 34
+#define cycleh 35
+#define timerl 36
+#define timerh 37
+#define timermatchl 38
+#define timermatchh 39
+#define mscratch 40
+#define mtvec 41
+#define mie 42
+#define mip 43
+#define mepc 44
+#define mtval 45
+#define mcause 46
+#define extraflags 47
+
+static uint state[48];
+
+#define CSR( x ) state[x]
+#define SETCSR( x, val ) { state[x] = val; }
+#define REG( x ) state[x]
+#define REGSET( x, val ) { state[x] = val; }
 
 #define uint32_t uint
 #define int32_t  int
 
 #define MAXICOUNT    1024
-#define MAX_FCNT     112
+#define MAX_FCNT     50
 #define CACHE_BLOCKS 128
 #define CACHE_N_WAY  2
 
@@ -55,13 +76,10 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MainSystemAccess( blockno ) _MainSystemMemory.Load( int3( blockno % SYSTEX_SIZE_X, blockno / SYSTEX_SIZE_X, 0 ) )
 #define MINIRV32_STEPPROTO MINIRV32_DECORATE int32_t MiniRV32IMAStep( MINIRV32_STATE_DEFINTION uint32_t elapsedUs )
 
-#define count MAXICOUNT
+#define count _MaxICount
+//MAXICOUNT
 
 #define uint4assign( x, y ) x = y
-
-#include "gpucache.h"
-
-#include "mini-rv32ima.h"
 
 
 #endif

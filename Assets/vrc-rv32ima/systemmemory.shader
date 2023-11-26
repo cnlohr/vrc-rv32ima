@@ -49,7 +49,7 @@
 				return OUT;
 			}
 
-			[maxvertexcount(128)]
+			[maxvertexcount(64)]
 			[instance(1)]
 			void geo( point v2g input[1], inout PointStream<g2f> stream,
 				uint instanceID : SV_GSInstanceID, uint geoPrimID : SV_PrimitiveID )
@@ -59,13 +59,13 @@
 				//if( geoPrimID > 0 || instanceID > 0 ) return;
 
 				g2f o;
-				for( int i = 0; i < 128; i++ )
+				for( int i = 0; i < 64; i++ )
 				{
-					uint4 data = _ComputeBuffer[uint2(i,0)];
-					uint4 addr = _ComputeBuffer[uint2(i,1)]; // Must be superword aligned.
+					uint4 data = _ComputeBuffer[uint2(i,1)];
+					uint4 addr = _ComputeBuffer[uint2(i,0)]; // Must be superword aligned.
 					
-					if( addr.x < MEMORY_BASE ) return;
-					uint superword = ((addr.x - MEMORY_BASE)/16);
+					if( addr.x < 1 ) return;
+					uint superword = addr.x - 1;
 					uint2 outsize = _SystemMemorySize;
 					uint2 coordOut = uint2( superword % outsize.x, superword / outsize.x );
 

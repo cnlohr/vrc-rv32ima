@@ -1,12 +1,12 @@
-
-			static uint4 cachesetsdata[CACHE_BLOCKS];
-			static uint  cachesetsaddy[CACHE_BLOCKS];
-			static uint  emitblocks[MAX_FCNT];
-			static uint  cache_usage;
+			static uint  cachesetsdata[CACHE_BLOCKS*4] = (uint[CACHE_BLOCKS*4])0;
+			static uint  cachesetsaddy[CACHE_BLOCKS] = (uint[CACHE_BLOCKS])0;
+			static uint  emitblocks[MAX_FCNT] = (uint[MAX_FCNT])0;
+			static uint  cache_usage = 0;
 
 			// Only use if aligned-to-4-bytes.
 			uint LoadMemInternalRB( uint ptr )
 			{
+				ptr -= MEMORY_BASE;
 				uint blockno = ptr / 16;
 				uint blocknop1 = (ptr >> 4)+1;
 				uint hash = (blockno % (CACHE_BLOCKS/CACHE_N_WAY)) * CACHE_N_WAY;
@@ -19,24 +19,30 @@
 					if( ct == blocknop1 )
 					{
 						// Found block.
-						uint4assign( block, cachesetsdata[i+hash] );
-						return block[(ptr&0xf)>>2];
+						return cachesetsdata[(i+hash)*4 + ((ptr&0xc)>>2)];
 					}
 					else if( ct == 0 )
 					{
 						// else, no block found. Read data.
 						uint4assign( block, MainSystemAccess( blockno ) );
-						return block[(ptr&0xf)>>2];
+						switch( ((ptr&0xc)>>2) )
+						{
+							case 0: return block.x;
+							case 1: return block.y;
+							case 2: return block.z;
+							case 3: return block.w;
+						}
 					}
 				}
 
 				if( i == CACHE_N_WAY )
 				{
-						// Reading after overfilled cache.
-						// Need to panic here.
-						// This should never ever happen.
-						uint4assign( block, MainSystemAccess( blockno ) );
-						return block[(ptr&0xf)>>2];
+					// Reading after overfilled cache.
+					// Need to panic here.
+					// This should never ever happen.
+					//uint4assign( block, MainSystemAccess( blockno ) );
+					//return block[(ptr&0xf)>>2];
+					return 0;
 				}
 
 				// Not arrivable.
@@ -47,6 +53,7 @@
 			// Store mem internal word (Only use if guaranteed word-alignment)
 			void StoreMemInternalRB( uint ptr, uint val )
 			{
+				ptr -= MEMORY_BASE;
 				//printf( "STORE %08x %08x\n", ptr, val );
 				uint blockno = ptr >> 4;
 				uint blocknop1 = blockno+1;
@@ -56,6 +63,7 @@
 				uint hashend = hash + CACHE_N_WAY;
 				uint4 block;
 				uint ct = 0;
+				
 				// Cache lines are 8-deep, by 16 bytes, with 128 possible cache addresses.
 				for( ; hash < hashend; hash++ )
 				{
@@ -64,10 +72,11 @@
 					if( ct == blocknop1 )
 					{
 						// Found block.
-						cachesetsdata[hash][(ptr&0xf)>>2] = val;
+						cachesetsdata[ hash*4+((ptr&0xc)>>2) ] = val;
 						return;
 					}
 				}
+				
 				// NOTE: It should be impossible for i to ever be or exceed 1024.
 				// We catch it early here.
 				if( hash == hashend )
@@ -87,9 +96,10 @@
 				}
 				cachesetsaddy[hash] = blocknop1;
 				uint4assign( block, MainSystemAccess( blockno ) );
-				block[(ptr&0xf)>>2] = val;
-				uint4assign( cachesetsdata[hash], block );
-
+				cachesetsdata[hash*4+0] = block.x;
+				cachesetsdata[hash*4+1] = block.y;
+				cachesetsdata[hash*4+2] = block.z;
+				cachesetsdata[hash*4+3] = block.w;
 				emitblocks[cache_usage++] = blocknop1;
 				// Make sure there's enough room to flush processor state
 				if( hash == hashend-1 )

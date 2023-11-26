@@ -64,6 +64,8 @@
 	#define MINIRV32_LOAD1_SIGNED( ofs ) *(int8_t*)(image + ofs)
 #endif
 
+
+#ifndef MINIRV32_CUSTOM_STATE
 // As a note: We quouple-ify these, because in HLSL, we will be operating with
 // uint4's.  We are going to uint4 data to/from system RAM.
 //
@@ -97,6 +99,7 @@ struct MiniRV32IMAState
 	// Bit 3+ = Load/Store reservation LSBs.
 	uint32_t extraflags;
 };
+#endif
 
 #ifndef MINIRV32_STEPPROTO
 MINIRV32_DECORATE int32_t MiniRV32IMAStep( struct MiniRV32IMAState * state, uint8_t * image, uint32_t vProcAddress, uint32_t elapsedUs, int count );
@@ -136,7 +139,7 @@ MINIRV32_STEPPROTO
 
 	uint32_t trap = 0;
 	uint32_t rval = 0;
-	uint32_t pc = CSR( pc );
+	uint32_t pc = CSR( pcreg );
 	uint32_t cycle = CSR( cyclel );
 
 	if( ( CSR( mip ) & (1<<7) ) && ( CSR( mie ) & (1<<7) /*mtie*/ ) && ( CSR( mstatus ) & 0x8 /*mie*/) )
@@ -211,7 +214,7 @@ MINIRV32_STEPPROTO
 						case 5: if( rs1 >= rs2 ) pc = immm4; break; //BGE
 						case 6: if( (uint32_t)rs1 < (uint32_t)rs2 ) pc = immm4; break;   //BLTU
 						case 7: if( (uint32_t)rs1 >= (uint32_t)rs2 ) pc = immm4; break;  //BGEU
-						default: trap = (2+1);
+						default: trap = (2+1); break;
 					}
 					break;
 				}
@@ -251,7 +254,7 @@ MINIRV32_STEPPROTO
 							case 2: rval = MINIRV32_LOAD4( rsval ); break;
 							case 4: rval = MINIRV32_LOAD1( rsval ); break;
 							case 5: rval = MINIRV32_LOAD2( rsval ); break;
-							default: trap = (2+1);
+							default: trap = (2+1); break;
 						}
 					}
 					break;
@@ -277,7 +280,7 @@ MINIRV32_STEPPROTO
 								CSR( timermatchl ) = rs2;
 							else if( addy == 0x11100000 ) //SYSCON (reboot, poweroff, etc.)
 							{
-								SETCSR( pc, pc + 4 );
+								SETCSR( pcreg, pc + 4 );
 								return rs2; // NOTE: PC will be PC of Syscon.
 							}
 							else
@@ -297,11 +300,12 @@ MINIRV32_STEPPROTO
 							case 0: MINIRV32_STORE1( addy, rs2 ); break;
 							case 1: MINIRV32_STORE2( addy, rs2 ); break;
 							case 2: MINIRV32_STORE4( addy, rs2 ); break;
-							default: trap = (2+1);
+							default: trap = (2+1); break;
 						}
 					}
 					break;
 				}
+#if 1
 				case 0x13: // Op-immediate 0b0010011
 				case 0x33: // Op           0b0110011
 				{
@@ -323,9 +327,9 @@ MINIRV32_STEPPROTO
 #else
 							CUSTOM_MULH
 #endif
-							case 4: if( rs2 == 0 ) rval = -1; else rval = ((int32_t)rs1 == INT32_MIN && (int32_t)rs2 == -1) ? rs1 : ((int32_t)rs1 / (int32_t)rs2); break; // DIV
+							case 4: if( rs2 == 0 ) rval = -1; else rval = ((int32_t)rs1 == (int32_t)INT32_MIN && (int32_t)rs2 == -1) ? rs1 : ((int32_t)rs1 / (int32_t)rs2); break; // DIV
 							case 5: if( rs2 == 0 ) rval = 0xffffffff; else rval = rs1 / rs2; break; // DIVU
-							case 6: if( rs2 == 0 ) rval = rs1; else rval = ((int32_t)rs1 == INT32_MIN && (int32_t)rs2 == -1) ? 0 : ((uint32_t)((int32_t)rs1 % (int32_t)rs2)); break; // REM
+							case 6: if( rs2 == 0 ) rval = rs1; else rval = ((int32_t)rs1 == (int32_t)INT32_MIN && (int32_t)rs2 == -1) ? 0 : ((uint32_t)((int32_t)rs1 % (int32_t)rs2)); break; // REM
 							case 7: if( rs2 == 0 ) rval = rs1; else rval = rs1 % rs2; break; // REMU
 						}
 					}
@@ -422,7 +426,7 @@ MINIRV32_STEPPROTO
 						{
 							CSR( mstatus ) |= 8;    //Enable interrupts
 							CSR( extraflags ) |= 4; //Infor environment we want to go to sleep.
-							SETCSR( pc, pc + 4 );
+							SETCSR( pcreg, pc + 4 );
 							return 1;
 						}
 						else if( ( ( csrno & 0xff ) == 0x02 ) )  // MRET
@@ -496,6 +500,7 @@ MINIRV32_STEPPROTO
 					}
 					break;
 				}
+#endif
 				default: trap = (2+1); break; // Fault: Invalid opcode.
 			}
 
@@ -509,7 +514,7 @@ MINIRV32_STEPPROTO
 			}
 		}
 
-		MINIRV32_POSTEXEC( pc, ir, trap );
+		MINIRV32_POSTEXEC( pcreg, ir, trap );
 
 		pc += 4;
 	}
@@ -544,7 +549,7 @@ MINIRV32_STEPPROTO
 
 	if( CSR( cyclel ) > cycle ) CSR( cycleh )++;
 	SETCSR( cyclel, cycle );
-	SETCSR( pc, pc );
+	SETCSR( pcreg, pc );
 	return 0;
 }
 
