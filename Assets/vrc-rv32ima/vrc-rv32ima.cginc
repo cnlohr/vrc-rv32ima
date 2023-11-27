@@ -54,7 +54,12 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define mcause 46
 #define extraflags 47
 
-static uint state[48] = (uint[48])0;
+#define stepstatus 48
+#define debug 49
+#define debug2 50
+#define debug3 51
+
+static uint state[52] = (uint[52])0;
 
 #define CSR( x ) state[x]
 #define SETCSR( x, val ) { state[x] = val; }
@@ -64,10 +69,10 @@ static uint state[48] = (uint[48])0;
 #define uint32_t uint
 #define int32_t  int
 
-#define MAXICOUNT    1024
+#define MAXICOUNT    1
 #define MAX_FCNT     50
 #define CACHE_BLOCKS 128
-#define CACHE_N_WAY  1
+#define CACHE_N_WAY  2
 
 #define INT32_MIN -2147483648
 #define AS_SIGNED(val) (asint(val))
@@ -76,8 +81,7 @@ static uint state[48] = (uint[48])0;
 #define MainSystemAccess( blockno ) _MainSystemMemory[uint2( (blockno) % SYSTEX_SIZE_X, (blockno) / SYSTEX_SIZE_X)]
 #define MINIRV32_STEPPROTO MINIRV32_DECORATE int32_t MiniRV32IMAStep( MINIRV32_STATE_DEFINTION uint32_t elapsedUs )
 
-#define count _MaxICount
-//MAXICOUNT
+#define count MAXICOUNT
 
 #define uint4assign( x, y ) x = y
 

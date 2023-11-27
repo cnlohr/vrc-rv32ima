@@ -6,6 +6,18 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.texelsaur.common": {
+      "version": "file:com.texelsaur.common",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.texelsaur.video": {
+      "version": "file:com.texelsaur.video",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.4.11",
       "depth": 1,

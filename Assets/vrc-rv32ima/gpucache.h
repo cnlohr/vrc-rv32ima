@@ -18,17 +18,13 @@
 
 			void SetField( inout uint4 vv, uint val, uint w )
 			{
-				if( w >= 2 )
+				switch( w )
 				{
-					if( w == 4 ) vv.w = val;
-					else vv.z = val;
+					case 0: vv.x = val; break;
+					case 1: vv.y = val; break;
+					case 2: vv.z = val; break;
+					case 3: vv.w = val; break;
 				}
-				else
-				{
-					if( w == 1 ) vv.y = val;
-					else vv.x = val;
-				}
-				//SetField( cachesetsdata[ hash ], val, ptrleftover );
 			}
 
 			// Only use if aligned-to-4-bytes.
@@ -75,7 +71,7 @@
 			// Store mem internal word (Only use if guaranteed word-alignment)
 			void StoreMemInternalRB( uint ptr, uint val )
 			{
-				uint ptrleftover = (val & 0xc)>>2;
+				uint ptrleftover = (ptr & 0xc)>>2;
 				//printf( "STORE %08x %08x\n", ptr, val );
 				uint blockno = ptr >> 4;  
 				uint blocknop1 = blockno+1;
@@ -135,7 +131,7 @@
 				{
 					cache_usage = MAX_FCNT;
 				}
-				#endif
+#endif
 			}
 
 			// NOTE: len does NOT control upper bits.

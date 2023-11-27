@@ -61,9 +61,9 @@
 			{
 				float2 uv = i.uv;
 				uv.x *= 2;
-				uv.y *= 24;
+				uv.y *= 26;
 				uint col = uv.x;
-				uint row = 24 - uv.y;
+				uint row = 26 - uv.y;
 				uint group = row * 2 + col;
 				
 				uv.x = frac( uv );
@@ -143,6 +143,10 @@
 							uint4( __m, __t, __v, __a ),
 							uint4( __m, __c, __a, __COLON ),
 							uint4( __e, __x, __t, __COLON ),
+							uint4( __s, __t, __e, __COLON ),
+							uint4( __r, __0, __0, __COLON ),
+							uint4( __r, __0, __0, __COLON ),
+							uint4( __r, __0, __0, __COLON ),
 						};
 						float3 tcol[] = {
 							float3( 0.4, 0.4, 0.4 ),
@@ -191,7 +195,13 @@
 							float3( 0.0, 1.0, 0.0 ),
 							float3( 0.0, 1.0, 0.0 ),
 							float3( 0.0, 1.0, 0.0 ),
-							float3( 0.0, 0.8, 0.0 ) };
+							float3( 0.0, 0.8, 0.0 ),
+							float3( 0.0, 0.8, 0.0 ),
+							float3( 1.0, 0.8, 0.0 ),
+							float3( 0.0, 0.8, 0.0 ),
+							float3( 0.0, 0.8, 0.0 ),
+							float3( 0.0, 0.8, 0.0 ),
+							};
 						uv *= float2( 4, 7 );
 						color = float4( tcol[group], 1.0 ) * PrintChar( label[group][char], uv, 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
 					}
