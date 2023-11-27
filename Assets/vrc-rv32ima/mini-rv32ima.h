@@ -122,7 +122,6 @@ MINIRV32_STEPPROTO
 	uint32_t new_timer = CSR( timerl ) + elapsedUs;
 	if( new_timer < CSR( timerl ) ) CSR( timerh )++;
 	CSR( timerl ) = new_timer;
-				CSR( debug2 ) = 0;
 
 	// Handle Timer interrupt.
 	if( ( CSR( timerh ) > CSR( timermatchh ) || ( CSR( timerh ) == CSR( timermatchh ) && CSR( timerl ) > CSR( timermatchl ) ) ) && ( CSR( timermatchh ) || CSR( timermatchl ) ) )
@@ -145,7 +144,6 @@ MINIRV32_STEPPROTO
 	if( ( CSR( mip ) & (1<<7) ) && ( CSR( mie ) & (1<<7) /*mtie*/ ) && ( CSR( mstatus ) & 0x8 /*mie*/) )
 	{
 		// Timer interrupt.
-		CSR( debug2 ) = 1;
 		trap = 0x80000007;
 		pc -= 4;
 	}
@@ -186,7 +184,6 @@ MINIRV32_STEPPROTO
 					if( reladdy & 0x00100000 ) reladdy |= 0xffe00000; // Sign extension.
 					rval = pc + 4;
 					pc = pc + reladdy - 4;
-					CSR( debug2 ) = 0xAAAAAAAA;
 					break;
 				}
 				case 0x67: // JALR (0b1100111)
@@ -195,7 +192,6 @@ MINIRV32_STEPPROTO
 					int32_t imm_se = imm | (( imm & 0x800 )?0xfffff000:0);
 					rval = pc + 4;
 					pc = ( (REG( (ir >> 15) & 0x1f ) + imm_se) & ~1) - 4;
-					CSR( debug2 ) = 0xBBBBBBBB;
 					break;
 				}
 				case 0x63: // Branch (0b1100011)
@@ -217,7 +213,6 @@ MINIRV32_STEPPROTO
 						case 7: if( (uint32_t)rs1 >= (uint32_t)rs2 ) pc = immm4; break;  //BGEU
 						default: trap = (2+1); break;
 					}
-					CSR( debug2 ) = 0xCCCCCCCC;
 					break;
 				}
 				case 0x03: // Load (0b0000011)
@@ -282,7 +277,6 @@ MINIRV32_STEPPROTO
 								CSR( timermatchl ) = rs2;
 							else if( addy == 0x11100000 ) //SYSCON (reboot, poweroff, etc.)
 							{
-								CSR( debug2 ) = 0xDDDDDDDD;
 								SETCSR( pcreg, pc + 4 );
 								return rs2; // NOTE: PC will be PC of Syscon.
 							}
@@ -428,7 +422,6 @@ MINIRV32_STEPPROTO
 						{
 							CSR( mstatus ) |= 8;    //Enable interrupts
 							CSR( extraflags ) |= 4; //Infor environment we want to go to sleep.
-							CSR( debug2 ) = 0xEEEEEEEE;
 							SETCSR( pcreg, pc + 4 );
 							return 1;
 						}
@@ -441,7 +434,6 @@ MINIRV32_STEPPROTO
 							uint32_t startextraflags = CSR( extraflags );
 							SETCSR( mstatus , (( startmstatus & 0x80) >> 4) | ((startextraflags&3) << 11) | 0x80 );
 							SETCSR( extraflags, (startextraflags & ~3) | ((startmstatus >> 11) & 3) );
-							CSR( debug2 ) = 0xFFFFFFFF;
 							pc = CSR( mepc ) -4;
 						}
 						else
@@ -520,7 +512,6 @@ MINIRV32_STEPPROTO
 		MINIRV32_POSTEXEC( pc, ir, trap );
 
 		pc += 4;
-		CSR( debug3 ) = pc;
 	}
 
 	// Handle traps and interrupts.

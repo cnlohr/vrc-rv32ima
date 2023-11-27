@@ -64,7 +64,7 @@
 					uint4 data = _ComputeBuffer[uint2(i,1)];
 					uint4 addr = _ComputeBuffer[uint2(i,0)]; // Must be superword aligned.
 					
-					if( addr.x < 1 ) return;
+					if( addr.x < 1 ) continue;
 					uint superword = addr.x - 1;
 					uint2 outsize = _SystemMemorySize;
 					uint2 coordOut = uint2( superword % outsize.x, superword / outsize.x );

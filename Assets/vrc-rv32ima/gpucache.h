@@ -4,15 +4,12 @@
 			
 			uint U4Select( uint4 v, uint w )
 			{
-				if( w >= 2 )
+				switch( w )
 				{
-					if( w == 4 ) return v.w;
-					else return v.z;
-				}
-				else
-				{
-					if( w == 1 ) return v.y;
-					else return v.x;
+				case 1: return v.y;
+				case 2: return v.z;
+				case 3: return v.w;
+				default: return v.x;
 				}
 			}
 
@@ -31,8 +28,8 @@
 			uint LoadMemInternalRB( uint ptr )
 			{
 				uint remainder4 = ((ptr&0xc)>>2);
-				uint blockno = ptr / 16;
-				uint blocknop1 = (ptr >> 4)+1;
+				uint blockno = ptr >> 4;
+				uint blocknop1 = blockno+1;
 				uint hash = (blockno % (CACHE_BLOCKS/CACHE_N_WAY)) * CACHE_N_WAY;
 				uint4 block;
 				uint ct = 0;
@@ -89,6 +86,7 @@
 					if( ct == 0 )
 					{
 						ct = cachesetsaddy[hash] = blocknop1;
+						cache_usage++;
 						uint4assign( cachesetsdata[hash], MainSystemAccess( blockno ) );
 
 						// Make sure there's enough room to flush processor state
@@ -189,7 +187,7 @@
 					exit( -99 );
 				}
 #endif			
-				return LoadMemInternalRB( ptr ) & lenx8mask;
+				return ret; //LoadMemInternalRB( ptr ) & lenx8mask;
 			}
 			
 			void StoreMemInternal( uint ptr, uint val, uint len )

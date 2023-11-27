@@ -28,11 +28,12 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32WARN( x )
 #define MINIRV32_POSTEXEC( pc, ir, trap )
 // TODO WRITE ME
-#define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 )
 #define MINIRV32_OTHERCSR_WRITE( csrno, writeval )
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
 #define MINIRV32_STATE_DEFINTION
-#define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = 0;
+
+#define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 )  if( addy == 0x10000000 ) { state[charout] = rs2; icount = MAXICOUNT; }
+#define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = (rsval == 0x10000005)?0x60:0x00;
 
 #define MINIRV32_CUSTOM_INTERNALS
 #define MINIRV32_CUSTOM_STATE
@@ -55,7 +56,7 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define extraflags 47
 
 #define stepstatus 48
-#define debug 49
+#define charout 49
 #define debug2 50
 #define debug3 51
 
@@ -69,8 +70,8 @@ static uint state[52] = (uint[52])0;
 #define uint32_t uint
 #define int32_t  int
 
-#define MAXICOUNT    1
-#define MAX_FCNT     50
+#define MAXICOUNT    1024
+#define MAX_FCNT     48
 #define CACHE_BLOCKS 128
 #define CACHE_N_WAY  2
 

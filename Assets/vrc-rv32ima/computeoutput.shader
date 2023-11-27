@@ -126,6 +126,8 @@
 						state[i*4+3] = v.w;
 					}
 				}
+				
+				state[charout] = 0;
 
 				bool nogo = false;
 				
@@ -145,8 +147,6 @@
 
 				if( !nogo )
 				{
-					state[debug] = state[pcreg];
-				
 					uint ret = MiniRV32IMAStep( elapsedUs );
 					// 0 means keep going if possible
 					// 1 means the processor needs to wait more time (waiting in timer interrupt) 
@@ -192,11 +192,11 @@
 					{
 						statealias[i] = uint4( state[i*4+0], state[i*4+1], state[i*4+2], state[i*4+3] );
 
-						uint2 coordOut = uint2( pixelOutputID, 0 );
+						uint2 coordOut = uint2( 64-13+i, 0 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
 						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, 0, 0, 0);
 						stream.Append(o);
-						coordOut = uint2( pixelOutputID++, 1 );
+						coordOut = uint2( 64-13+i, 1 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
 						o.color = statealias[i];
 						stream.Append(o);
