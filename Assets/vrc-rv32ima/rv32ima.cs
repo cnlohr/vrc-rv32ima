@@ -26,6 +26,7 @@ public class rv32ima : UdonSharpBehaviour
 	public double timeCompression = 0.1;
 	
 	private bool running = true;
+	private bool step = false;
 
 	void Start()
 	{
@@ -42,6 +43,8 @@ public class rv32ima : UdonSharpBehaviour
 
 	void Update()
 	{
+		computeMaterial.SetFloat( "_SingleStep", 0.0f );
+		computeMaterial.SetFloat( "_SingleStepGo", 0.0f );
 		if( !running ) return;
 		if( frames == 0 )
 		{			
@@ -52,11 +55,19 @@ public class rv32ima : UdonSharpBehaviour
 			VRCGraphics.Blit( null, terminalInternal2, terminalInternal, -1 ); 
 			terminalInternal.SetFloat( "_Clear", 0.0f );
 		}
-		
+
 		if( iterations > 100 ) iterations = 100;
-		
+		int do_iterations = iterations;
+
+		if( step )
+		{
+			computeMaterial.SetFloat( "_SingleStep", 1.0f );
+			computeMaterial.SetFloat( "_SingleStepGo", 0.0f );
+			do_iterations = 2;
+		}
+
 		int i;
-		for( i = 0; i < iterations; i++ )
+		for( i = 0; i < do_iterations; i++ )
 		{
 			bool bIsOddFrame = (frames & 1) != 0;
 			System.DateTime now = System.DateTime.Now;
@@ -70,7 +81,21 @@ public class rv32ima : UdonSharpBehaviour
 			terminalInternal.SetTexture( "_ReadFromTerminal", bIsOddFrame?terminalInternal1:terminalInternal2 );
 			VRCGraphics.Blit( null, bIsOddFrame?terminalInternal2:terminalInternal1, terminalInternal, -1 ); 
 			terminalShow.SetTexture( "_ReadFromTerminal", bIsOddFrame?terminalInternal2:terminalInternal1 );
+
 			frames++;
+
+			if( step )
+			{
+				computeMaterial.SetFloat( "_SingleStepGo", 1.0f );
+			}
+		}
+		
+		if( step )
+		{
+			computeMaterial.SetFloat( "_SingleStep", 0.0f );
+			computeMaterial.SetFloat( "_SingleStepGo", 0.0f );
+			step = false;
+			running = false;
 		}
 	}
 
@@ -84,5 +109,11 @@ public class rv32ima : UdonSharpBehaviour
 	public void ToggleRun()
 	{
 		running = !running;
+	}
+
+	public void Step()
+	{
+		running = true;
+		step = true;
 	}
 }

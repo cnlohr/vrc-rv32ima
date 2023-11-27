@@ -83,7 +83,7 @@ static uint state[52] = (uint[52])0;
 #define MainSystemAccess( blockno ) _MainSystemMemory[uint2( (blockno) % SYSTEX_SIZE_X, (blockno) / SYSTEX_SIZE_X)]
 #define MINIRV32_STEPPROTO MINIRV32_DECORATE int32_t MiniRV32IMAStep( MINIRV32_STATE_DEFINTION uint32_t elapsedUs )
 
-#define count MAXICOUNT
+static uint count;
 
 #define uint4assign( x, y ) x = y
 

@@ -26,13 +26,14 @@
 			float4 _SystemMemory_TexelSize;
 			float4 _SystemMemory_ST;
 
-			float PrintHex( uint4 val, float2 uv )
+			float4 PrintHex( uint4 val, float2 uv )
 			{
 				uv *= float2( 32, 7 );
 				int charno = uv.x/4;
 				int row = uv.y/7;
 				uint dig = (val[3-row] >> (28-charno*4))&0xf;
-				return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+				float hexchar = PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+				return hexchar;
 			}
 
 			struct appdata
@@ -69,17 +70,13 @@
 				uv.x = frac( uv );
 				float4 color = 0;
 
-				if( col )
-				{
-					uv.x -= 1./13.;
-				}
 				if( uv.x < 0 )
 				{
 					color = 0;
 				}
 				else
 				{
-					uv.x *= (13./8.);
+					uv.x *= (16./8.);
 					uv.x -= 0.5;
 					
 					if( uv.x < 0 )
@@ -210,9 +207,21 @@
 						uint mcell = group/4;
 						uint4 cell = _SystemMemory.Load( uint3( mcell, _SystemMemory_TexelSize.w-1, 0 ) );
 						if( uv.x > 1 )
-							color = 0;
+						{
+							uv.x *= 32.0;
+							uint xcell = 12 - uv.x/4;
+							uint digpair = (cell[group%4]>>(xcell*8)) & 0xff; 
+							uv.y = frac( uv.y ) * 7.0;
+							if( digpair )
+							{
+								float charness = PrintChar( digpair, float2( 4.0-frac(uv.x/4.0)*4.0, uv.y ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+								color = charness * 0.2;
+							}
+						}
 						else
+						{
 							color = PrintHex( cell[group%4], frac(uv) );
+						}
 					}
 				}
 				UNITY_APPLY_FOG(i.fogCoord, color);

@@ -146,6 +146,11 @@
 						if( !_SingleStepGo )
 							state[stepstatus] = 0;
 					}
+					count = 1;
+				}
+				else
+				{
+					count = MAXICOUNT;
 				}
 
 				if( !nogo )
