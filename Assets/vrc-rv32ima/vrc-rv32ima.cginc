@@ -3,11 +3,16 @@
 
 
 
+#define MAXICOUNT    1024
+#define MAX_FCNT     48
+#define CACHE_BLOCKS 128
+#define CACHE_N_WAY  2
+
 Texture2D<uint4> _MainSystemMemory;
 
-#define MINI_RV32_RAM_SIZE (1024*1024*16 - SYSTEX_SIZE_X*16)
 #define SYSTEX_SIZE_X 1024
 #define SYSTEX_SIZE_Y 1024
+#define MINI_RV32_RAM_SIZE (SYSTEX_SIZE_X*SYSTEX_SIZE_Y*16 - SYSTEX_SIZE_X*16)
 
 #define MEMORY_BASE 0x80000000
 #define MEMORY_SIZE (MINI_RV32_RAM_SIZE)
@@ -27,8 +32,8 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32_IMPLEMENTATION
 #define MINIRV32WARN( x )
 #define MINIRV32_POSTEXEC( pc, ir, trap )
-// TODO WRITE ME
-#define MINIRV32_OTHERCSR_WRITE( csrno, writeval )
+
+#define MINIRV32_OTHERCSR_WRITE( csrno, writeval ) if( csrno == 0x139 ) { state[charout] = writeval; icount = MAXICOUNT; }
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
 #define MINIRV32_STATE_DEFINTION
 
@@ -70,10 +75,6 @@ static uint state[52] = (uint[52])0;
 #define uint32_t uint
 #define int32_t  int
 
-#define MAXICOUNT    1024
-#define MAX_FCNT     48
-#define CACHE_BLOCKS 128
-#define CACHE_N_WAY  2
 
 #define INT32_MIN -2147483648
 #define AS_SIGNED(val) (asint(val))

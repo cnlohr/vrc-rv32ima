@@ -2,6 +2,8 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
+// Image can be https://github.com/cnlohr/mini-rv32ima-images/blob/master/images/linux-5.18.0-rv32nommu-cnl-1.zip
+
 #include "stb_image_write.h"
 
 #define FRAMING 1024
@@ -29,7 +31,13 @@ int main()
 	int dtbLen = ftell( f );
 	fseek( f, 0, SEEK_SET );
 	uint8_t * dtb = calloc( dtbLen + FRAMING, 1 );
+	// TRICKY: Override dtbSize
+	uint32_t tSize = 1024*1023*16;
 	fread( dtb, dtbLen, 1, f );
+	dtb[0x13c+0] = tSize>>24;
+	dtb[0x13c+1] = tSize>>16;
+	dtb[0x13c+2] = tSize>>8;
+	dtb[0x13c+0] = tSize>>0;
 
 	w = FRAMING;
 	h = (dtbLen + FRAMING-1) / FRAMING;

@@ -5,6 +5,7 @@
 		_MainSystemMemory( "Main System Memory", 2D ) = "black" { }
 		[ToggleUI] _SingleStep( "Single Step Enable", float ) = 0.0
 		[ToggleUI] _SingleStepGo( "Single Step Go", float ) = 0.0
+		_ElapsedTime( "Elapsed Time", float ) = .0001
 	}
 	SubShader
 	{
@@ -61,11 +62,13 @@
 			#pragma exclude_renderers d3d11_9x
 			#pragma exclude_renderers d3d9	 // Just tried adding these because of a bgolus post to test,has no impact.
 			#pragma target 5.0
+
 			#pragma skip_optimizations d3d11
-			#pragma enable_d3d11_debug_symbols
-			
+			//#pragma enable_d3d11_debug_symbols
+
 			uint _SingleStepGo;
 			uint _SingleStep;
+			float _ElapsedTime;
 
 			#include "vrc-rv32ima.cginc"			
 			#include "gpucache.h"
@@ -112,7 +115,7 @@
 				uint i;
 				cache_usage = 0;
 				uint pixelOutputID = 0;
-				uint elapsedUs = 1;
+				uint elapsedUs = _ElapsedTime * 1000000;
 
 				// Load state in from main ram.
 				uint4 v;
@@ -165,7 +168,6 @@
 						break;
 					}
 					default:
-						CSR( extraflags ) |= ret << 16;
 						break;
 					}
 				}
@@ -202,20 +204,7 @@
 						stream.Append(o);
 					}
 				}
-
-/*
-				while( pixelOutputID < 64 )
-				{
-					uint2 coordOut = uint2( pixelOutputID, 0 );
-					o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-					o.color = uint4(0, 0, 0, 0);
-					stream.Append(o);
-					coordOut = uint2( pixelOutputID++, 1 );
-					o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-					o.color = uint4(0xaaaaaaaa, pixelOutputID, 0xffffffff, 0xffffffff);
-					stream.Append(o);
-				}
-*/
+				
 				#endif
 			}
 
