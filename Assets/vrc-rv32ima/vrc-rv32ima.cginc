@@ -10,6 +10,9 @@
 
 Texture2D<uint4> _MainSystemMemory;
 
+#define COMPUTE_OUT_X 64
+#define COMPUTE_OUT_Y 2
+
 #define SYSTEX_SIZE_X 1024
 #define SYSTEX_SIZE_Y 1024
 #define MINI_RV32_RAM_SIZE (SYSTEX_SIZE_X*SYSTEX_SIZE_Y*16 - SYSTEX_SIZE_X*16)
@@ -33,7 +36,8 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32WARN( x )
 #define MINIRV32_POSTEXEC( pc, ir, trap )
 
-#define MINIRV32_OTHERCSR_WRITE( csrno, writeval ) if( csrno == 0x139 ) { state[charout] = writeval; icount = MAXICOUNT; }
+#define MINIRV32_OTHERCSR_WRITE( csrno, writeval ) 
+//if( csrno == 0x139 ) { state[charout] = writeval; icount = MAXICOUNT; }
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
 #define MINIRV32_STATE_DEFINTION
 
