@@ -48,7 +48,7 @@
 			
 			float recoord( uint pcreg, float2 thisCoord )
 			{
-				uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] % 0xffffff;
+				uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] - 0x80000000;
 				pcv /= 16;
 				thisCoord += 0.25;
 				float2 dpos = thisCoord - float2( pcv % _MainSystemMemory_TexelSize.z, pcv / _MainSystemMemory_TexelSize.w );

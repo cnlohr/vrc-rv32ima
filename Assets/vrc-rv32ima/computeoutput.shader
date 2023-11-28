@@ -102,7 +102,7 @@
 			
 			[maxvertexcount(128)]
 			[instance(1)]
-			void geo( point v2g input[1], inout PointStream<g2f> stream,
+			void geo( triangle v2g input[3], inout PointStream<g2f> stream,
 				uint instanceID : SV_GSInstanceID, uint geoPrimID : SV_PrimitiveID )
 			{
 			#if UNITY_SINGLE_PASS_STEREO
@@ -179,11 +179,11 @@
 					if( a > 0 )
 					{
 						uint2 coordOut = uint2( pixelOutputID, 0 );
-						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
+						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
 						o.color = uint4(a, 0, 0, 0);
 						stream.Append(o);
 						coordOut = uint2( pixelOutputID++, 1 );
-						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
+						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
 						o.color = cachesetsdata[i];
 						stream.Append(o);
 					}
@@ -198,11 +198,11 @@
 						statealias[i] = uint4( state[i*4+0], state[i*4+1], state[i*4+2], state[i*4+3] );
 
 						uint2 coordOut = uint2( 64-13+i, 0 );
-						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, 0, 0, 0);
+						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
+						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, instanceID, geoPrimID, 0);
 						stream.Append(o);
 						coordOut = uint2( 64-13+i, 1 );
-						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
+						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
 						o.color = statealias[i];
 						stream.Append(o);
 					}

@@ -2355,7 +2355,7 @@ MonoBehaviour:
   terminalInternal2: {fileID: 8400000, guid: e6b0654262375454e9b6496079646ab7, type: 2}
   loadImage: {fileID: 2100000, guid: 10fe350c1228c3342b9bafa2dfbaa5ff, type: 2}
   mainTexture: {fileID: 2800000, guid: 33f32142c2c2d4662be5f5274db27158, type: 3}
-  iterations: 40
+  iterations: 20
   timeCompression: 1
 --- !u!4 &1645704399
 Transform:
