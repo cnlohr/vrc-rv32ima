@@ -63,8 +63,8 @@
 			#pragma exclude_renderers d3d9	 // Just tried adding these because of a bgolus post to test,has no impact.
 			#pragma target 5.0
 
-			//#pragma skip_optimizations d3d11
-			#pragma enable_d3d11_debug_symbols
+			#pragma skip_optimizations d3d11
+			//#pragma enable_d3d11_debug_symbols
 
 			uint _SingleStepGo;
 			uint _SingleStep;
@@ -123,25 +123,28 @@
 					for( i = 0; i < 13; i++ )
 					{
 						uint4 v = _MainSystemMemory.Load( uint3( i, SYSTEX_SIZE_Y-1, 0 ) );
-						state[i] = v;
+						state[i*4+0] = v.x;
+						state[i*4+1] = v.y;
+						state[i*4+2] = v.z;
+						state[i*4+3] = v.w;
 					}
 				}
 				
-				CSR( charout ) = 0;
+				state[charout] = 0;
 
 				bool nogo = false;
 				
 				if( _SingleStep )
 				{
-					if( CSR( stepstatus ) == 0 && _SingleStepGo )
+					if( state[stepstatus] == 0 && _SingleStepGo )
 					{
-						CSR( stepstatus ) = 1;
+						state[stepstatus] = 1;
 					}
 					else
 					{
 						nogo = true;
 						if( !_SingleStepGo )
-							CSR( stepstatus ) = 0;
+							state[stepstatus] = 0;
 					}
 					count = 1;
 				}
@@ -192,13 +195,15 @@
 					uint4 statealias[13];
 					for( i = 0; i < 13; i++ )
 					{
+						statealias[i] = uint4( state[i*4+0], state[i*4+1], state[i*4+2], state[i*4+3] );
+
 						uint2 coordOut = uint2( 64-13+i, 0 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
 						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, 0, 0, 0);
 						stream.Append(o);
 						coordOut = uint2( 64-13+i, 1 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(64,2) );
-						o.color = state[i];
+						o.color = statealias[i];
 						stream.Append(o);
 					}
 				}
