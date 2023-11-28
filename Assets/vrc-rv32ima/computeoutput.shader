@@ -165,11 +165,7 @@
 						break;
 					case 1: // Waiting for timer interrupt.
 					{
-						uint cl = CSR( cyclel );
-						cl+=0x1000; 
-						if( cl < CSR( cyclel ) )
-							SETCSR( cycleh, CSR( cycleh ) + 1 );
-						SETCSR( cyclel, cl );
+						CSR( sleeps ) = ( CSR( sleeps ) + 1 ) & 0xffffff;
 						break;
 					}
 					default:
@@ -192,6 +188,8 @@
 						stream.Append(o);
 					}
 				}
+				
+				CSR( sleeps ) = (CSR( sleeps ) & 0x00ffffff) | ( pixelOutputID << 24 );
 
 				{
 					uint4 statealias[13];

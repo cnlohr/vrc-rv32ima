@@ -67,14 +67,14 @@ public class rv32ima : UdonSharpBehaviour
 		}
 
 		int i;
+		System.DateTime now = System.DateTime.Now;
+		System.TimeSpan diff = System.DateTime.Now - last;
+		double elapsed = diff.TotalSeconds * timeCompression;
 		for( i = 0; i < do_iterations; i++ )
 		{
 			bool bIsOddFrame = (frames & 1) != 0;
-			System.DateTime now = System.DateTime.Now;
-			System.TimeSpan diff = System.DateTime.Now - last;
-			double elapsed = diff.TotalSeconds * timeCompression;
 			last = now;
-			computeMaterial.SetFloat( "_ElapsedTime", (float)elapsed );
+			computeMaterial.SetFloat( "_ElapsedTime", (float)(elapsed/do_iterations) );
 			VRCGraphics.Blit( null, computeBuffer, computeMaterial, -1 ); 
 			VRCGraphics.Blit( null, systemMemory, systemWriter, -1 ); 
 

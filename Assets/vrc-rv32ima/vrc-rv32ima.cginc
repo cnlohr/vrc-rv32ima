@@ -62,7 +62,7 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 
 #define stepstatus 48
 #define charout 49
-#define debug2 50
+#define sleeps 50
 #define debug3 51
 
 static uint state[52] = (uint[52])0;

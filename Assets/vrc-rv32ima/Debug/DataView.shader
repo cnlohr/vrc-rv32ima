@@ -50,9 +50,11 @@
 			{
 				uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] % 0xffffff;
 				pcv /= 16;
-				float pcdist = length( thisCoord - float2( pcv % _MainSystemMemory_TexelSize.z, pcv / _MainSystemMemory_TexelSize.w ) );
-				
-				return saturate( 3.0 - abs( 5.0 - pcdist ) );
+				thisCoord += 0.25;
+				float2 dpos = thisCoord - float2( pcv % _MainSystemMemory_TexelSize.z, pcv / _MainSystemMemory_TexelSize.w );
+				float pcdist = length( dpos );
+				float xclamp = max( 2.0-abs( dpos.x - dpos.y ), 2.0-abs( dpos.x + dpos.y ) );
+				return min( saturate( 10.0 - abs( 11.0 - pcdist ) ), saturate(xclamp) );
 			}
 
             float4 frag (v2f i) : SV_Target
@@ -63,9 +65,14 @@
 				
 				#if _DoOverlay
 					#define pcreg 32
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 10, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 11, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 12, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 13, thisCoord ) );
+
 					col = lerp( col, float4( 1.0, 0.0, 0.0, 0.0 ), recoord( 32, thisCoord ) );
 					col = lerp( col, float4( 0.0, 0.0, 1.0, 0.0 ), recoord(  2, thisCoord ) );
-					col = lerp( col, float4( 0.0, 1.0, 0.0, 0.0 ), recoord(  4, thisCoord ) );
+					col = lerp( col, float4( 0.0, 1.0, 1.0, 0.0 ), recoord(  4, thisCoord ) );
 				#endif
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
