@@ -505,7 +505,51 @@ MINIRV32_STEPPROTO
 
 			if( rdid )
 			{
-				REGSET( rdid, rval ); // Write back register.
+				int rem = rdid % 4;
+				int sw = rdid / 4;
+				switch( rem )
+				{
+					case 0: state[sw].x = rval; break;
+					case 1: state[sw].y = rval; break;
+					case 2: state[sw].z = rval; break;
+					case 3: state[sw].w = rval; break;
+				}
+				/*
+				switch( rdid )
+				{
+				case 1: state[0][1] = rval; break;
+				case 2: state[0][2] = rval; break;
+				case 3: state[0][3] = rval; break;
+				case 4: state[1][0] = rval; break;
+				case 5: state[1][1] = rval; break;
+				case 6: state[1][2] = rval; break;
+				case 7: state[1][3] = rval; break;
+				case 8: state[2][0] = rval; break;
+				case 9: state[2][1] = rval; break;
+				case 10: state[2][2] = rval; break;
+				case 11: state[2][3] = rval; break;
+				case 12: state[3][0] = rval; break;
+				case 13: state[3][1] = rval; break;
+				case 14: state[3][2] = rval; break;
+				case 15: state[3][3] = rval; break;
+				case 16: state[4][0] = rval; break;
+				case 17: state[4][1] = rval; break;
+				case 18: state[4][2] = rval; break;
+				case 19: state[4][3] = rval; break;
+				case 20: state[5][0] = rval; break;
+				case 21: state[5][1] = rval; break;
+				case 22: state[5][2] = rval; break;
+				case 23: state[5][3] = rval; break;
+				case 24: state[6][0] = rval; break;
+				case 25: state[6][1] = rval; break;
+				case 26: state[6][2] = rval; break;
+				case 27: state[6][3] = rval; break;
+				case 28: state[7][0] = rval; break;
+				case 29: state[7][1] = rval; break;
+				case 30: state[7][2] = rval; break;
+				case 31: state[7][3] = rval; break;
+				}
+				*/
 			}
 		}
 

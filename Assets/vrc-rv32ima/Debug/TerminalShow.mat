@@ -56,7 +56,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ReadFromTerminal:
-        m_Texture: {fileID: 8400000, guid: 54d54f7f184cb4f418fe385c03595a4b, type: 2}
+        m_Texture: {fileID: 8400000, guid: e6b0654262375454e9b6496079646ab7, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SystemMemory:

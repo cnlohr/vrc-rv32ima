@@ -33,44 +33,47 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32WARN( x )
 #define MINIRV32_POSTEXEC( pc, ir, trap )
 
-#define MINIRV32_OTHERCSR_WRITE( csrno, writeval ) if( csrno == 0x139 ) { state[charout] = writeval; icount = MAXICOUNT; }
+#define MINIRV32_OTHERCSR_WRITE( csrno, writeval ) if( csrno == 0x139 ) { CSR(charout) = writeval; icount = MAXICOUNT; }
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
 #define MINIRV32_STATE_DEFINTION
 
-#define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 )  if( addy == 0x10000000 ) { state[charout] = rs2; icount = MAXICOUNT; }
+#define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 )  if( addy == 0x10000000 ) { CSR(charout) = rs2; icount = MAXICOUNT; }
 #define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = (rsval == 0x10000005)?0x60:0x00;
 
 #define MINIRV32_CUSTOM_INTERNALS
 #define MINIRV32_CUSTOM_STATE
 
-#define pcreg 32
-#define mstatus 33
-#define cyclel 34
-#define cycleh 35
-#define timerl 36
-#define timerh 37
-#define timermatchl 38
-#define timermatchh 39
-#define mscratch 40
-#define mtvec 41
-#define mie 42
-#define mip 43
-#define mepc 44
-#define mtval 45
-#define mcause 46
-#define extraflags 47
+//5792: ret 
 
-#define stepstatus 48
-#define charout 49
-#define sleeps 50
-#define debug3 51
 
-static uint state[52] = (uint[52])0;
+#define pcreg [8][0]
+#define mstatus [8][1]
+#define cyclel [8][2]
+#define cycleh [8][3]
+#define timerl [9][0]
+#define timerh [9][1]
+#define timermatchl [9][2]
+#define timermatchh [9][3]
+#define mscratch [10][0]
+#define mtvec [10][1]
+#define mie [10][2]
+#define mip [10][3]
+#define mepc [11][0]
+#define mtval [11][1]
+#define mcause [11][2]
+#define extraflags [11][3]
 
-#define CSR( x ) state[x]
-#define SETCSR( x, val ) { state[x] = val; }
-#define REG( x ) state[x]
-#define REGSET( x, val ) { state[x] = val; }
+#define stepstatus [12][0]
+#define charout [12][1]
+#define sleeps [12][2]
+#define debug3 [12][3]
+
+static uint4 state[52/4] = (uint4[52/4])0;
+
+#define CSR( x ) state x
+#define SETCSR( x, val ) { state x = val; }
+#define REG( x ) state[(x)/4][(x)%4]
+#define REGSET( x, val ) { state[(x)/4][(x)%4] = val; }
 
 #define uint32_t uint
 #define int32_t  int
