@@ -243,15 +243,26 @@ MINIRV32_STEPPROTO
 					}
 					else
 					{
+						uint btor = 0;
+						uint expandbyte = 0;
 						switch( ( ir >> 12 ) & 0x7 )
 						{
 							//LB, LH, LW, LBU, LHU
-							case 0: rval = MINIRV32_LOAD1_SIGNED( rsval ); break;
-							case 1: rval = MINIRV32_LOAD2_SIGNED( rsval ); break;
-							case 2: rval = MINIRV32_LOAD4( rsval ); break;
-							case 4: rval = MINIRV32_LOAD1( rsval ); break;
-							case 5: rval = MINIRV32_LOAD2( rsval ); break;
+							case 0: btor = 1; expandbyte = 0x80; break; //rval = MINIRV32_LOAD1_SIGNED( rsval ); break;
+							case 1: btor = 2; expandbyte = 0x8000; break; //rval = MINIRV32_LOAD2_SIGNED( rsval ); break;
+							case 2: btor = 4; break; //rval = MINIRV32_LOAD4( rsval ); break;
+							case 4: btor = 1; break; //rval = MINIRV32_LOAD1( rsval ); break;
+							case 5: btor = 2; break; //rval = MINIRV32_LOAD2( rsval ); break;
 							default: trap = (2+1); break;
+						}
+						if( btor )
+						{
+							rval = LoadMemInternal( rsval, btor );
+							if( rval & expandbyte )
+							{
+								rval |= ( btor == 1 ) ? 0xffffff00 : 0xffff0000;
+							}
+								
 						}
 					}
 					break;
