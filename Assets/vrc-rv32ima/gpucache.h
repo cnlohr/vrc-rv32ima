@@ -34,6 +34,7 @@
 				uint4 block;
 				uint ct = 0;
 				uint i;
+				[loop]
 				for( i = 0; i < CACHE_N_WAY; i++ )
 				{
 					ct = cachesetsaddy[i+hash];
@@ -80,6 +81,7 @@
 				uint ct = 0;
 				
 				// Cache lines are 8-deep, by 16 bytes, with 128 possible cache addresses.
+				[loop]
 				for( ; hash < hashend; hash++ )
 				{
 					ct = cachesetsaddy[hash];

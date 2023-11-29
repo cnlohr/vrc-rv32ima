@@ -167,7 +167,7 @@ MINIRV32_STEPPROTO
 		}
 		else
 		{
-			ir = MINIRV32_LOAD4( ofs_pc );
+			ir = LoadMemInternalRB( ofs_pc );//MINIRV32_LOAD4( ofs_pc );
 			uint32_t rdid = (ir >> 7) & 0x1f;
 
 			switch( ir & 0x7f )
@@ -291,13 +291,19 @@ MINIRV32_STEPPROTO
 					}
 					else
 					{
+						uint nby = 0;
 						switch( ( ir >> 12 ) & 0x7 )
 						{
 							//SB, SH, SW
-							case 0: MINIRV32_STORE1( addy, rs2 ); break;
-							case 1: MINIRV32_STORE2( addy, rs2 ); break;
-							case 2: MINIRV32_STORE4( addy, rs2 ); break;
+							case 0: nby = 1; break;
+							case 1: nby = 2; break;
+							case 2: nby = 4; break;
 							default: trap = (2+1); break;
+						}
+						if( nby )
+						{
+							StoreMemInternal( addy, rs2, nby );
+							if( cache_usage >= MAX_FCNT ) icount = MAXICOUNT; 
 						}
 					}
 					break;
@@ -467,7 +473,8 @@ MINIRV32_STEPPROTO
 					}
 					else
 					{
-						rval = MINIRV32_LOAD4( rs1 );
+						rval = LoadMemInternalRB( rs1 );
+						//MINIRV32_LOAD4( rs1 );
 
 						// Referenced a little bit of https://github.com/franzflasch/riscv_em/blob/master/src/core/core.c
 						uint32_t dowrite = 1;
@@ -492,7 +499,9 @@ MINIRV32_STEPPROTO
 							case 28: rs2 = (rs2>rval)?rs2:rval; break; //AMOMAXU.W (0b11100)
 							default: trap = (2+1); dowrite = 0; break; //Not supported.
 						}
-						if( dowrite ) MINIRV32_STORE4( rs1, rs2 );
+						if( dowrite ) 
+						{ StoreMemInternalRB( rs1, rs2 ); if( cache_usage >= MAX_FCNT ) icount = MAXICOUNT; }
+								//MINIRV32_STORE4( rs1, rs2 );
 					}
 					break;
 				}

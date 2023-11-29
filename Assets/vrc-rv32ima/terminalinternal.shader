@@ -48,14 +48,13 @@
 			uint4 frag (v2f i) : SV_Target
             {
 				uint2 charcoord = i.vertex.xy/i.vertex.w;
-				
+
 				const uint2 termsize = ( _ReadFromTerminal_TexelSize.zw - uint2( 0, 1 ) );
 				uint rchar = _MainSystemMemory[uint2( 12, _MainSystemMemory_TexelSize.w - 1 )].y;
 				uint2 cursor = uint2( _ReadFromTerminal[uint2(0,termsize.y)].x, _ReadFromTerminal[uint2(1,termsize.y)].x );
 				int escapemode = _ReadFromTerminal[uint2(2,termsize.y)].x;
 				uint4 ret = 0;
-				
-				
+
 				bool bDidInit = false;
 				bool bNeedToScroll = false;
 				//if( rchar == 27 )
