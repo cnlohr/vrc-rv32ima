@@ -34,7 +34,6 @@
 				uint4 block;
 				uint ct = 0;
 				uint i;
-				[loop]
 				for( i = 0; i < CACHE_N_WAY; i++ )
 				{
 					ct = cachesetsaddy[i+hash];
@@ -81,7 +80,6 @@
 				uint ct = 0;
 				
 				// Cache lines are 8-deep, by 16 bytes, with 128 possible cache addresses.
-				[loop]
 				for( ; hash < hashend; hash++ )
 				{
 					ct = cachesetsaddy[hash];
@@ -146,19 +144,7 @@
 						// Must be split into two reads.
 						uint ret0 = LoadMemInternalRB( ptr & (~3) );
 						uint ret1 = LoadMemInternalRB( (ptr & (~3)) + 4 );
-
 						uint ret = lenx8mask & ((ret0 >> (remo*8)) | (ret1<<((4-remo)*8)));
-
-#if CHECKRAM
-						uint check = 0;
-						memcpy( &check, ram_image_shadow + ptr, len );
-						if( check != ret )
-						{
-							fprintf( stderr, "Error check failed x (%08x != %08x) @ %08x\n", check, ret, ptr  );
-							exit( -99 );
-						}
-#endif			
-
 						return ret;
 					}
 					else
@@ -166,30 +152,11 @@
 						// Can just be one.
 						uint ret = LoadMemInternalRB( ptr & (~3) );
 						ret = (ret >> (remo*8)) & lenx8mask;
-
-#if CHECKRAM
-						uint check = 0;
-						memcpy( &check, ram_image_shadow + ptr, len );
-						if( check != ret )
-						{
-							fprintf( stderr, "Error check failed y (%08x != %08x) @ %08x\n", check, ret, ptr  );
-							exit( -99 );
-						}
-#endif
 						return ret;
 					}
 				}
-				uint ret = LoadMemInternalRB( ptr ) & lenx8mask;
-#if CHECKRAM
-				uint check = 0;
-				memcpy( &check, ram_image_shadow + ptr, len );
-				if( check != ret )
-				{
-					fprintf( stderr, "Error check failed z (%08x != %08x (%d) ) @ %08x\n", check, ret, len, ptr  );
-					exit( -99 );
-				}
-#endif			
-				return ret; //LoadMemInternalRB( ptr ) & lenx8mask;
+				else
+					return LoadMemInternalRB( ptr ) & lenx8mask;
 			}
 			
 			void StoreMemInternal( uint ptr, uint val, uint len )
