@@ -291,8 +291,19 @@
 						}
 						else
 						{
-#if 1 
-						
+#if 1
+							//LB, LH, LW [invalid] LBU, LHU [invalid] [invalid]
+							const uint btortable[] = { 1, 2, 4, 0, 1, 2, 0, 0 };
+							const uint ebtable[] = { 0x80, 0x8000, 0, 0, 0, 0, 0, 0 };
+							uint type_of_load = ( ir >> 12 ) & 0x7;
+							uint btor = btortable[type_of_load];
+							uint expandbyte = ebtable[type_of_load];
+							uint ebor = -(expandbyte * 2);
+							rval = LoadMemInternal( rsval, btor );
+							rval |= -( (int)( rval & expandbyte ) << 1 ); // Compute bit-wise sign 2's compliment expansion
+							trap = ( btor == 0 ) ? (2+1) : 0;
+
+#elif 1
 							uint btor = 0;
 							uint expandbyte = 0;
 							switch( ( ir >> 12 ) & 0x7 )
@@ -314,6 +325,7 @@
 								}
 									
 							}
+							
 #else // Ever so slightly faster (but chonky) Loads
 							switch( ( ir >> 12 ) & 0x7 )
 							{
@@ -439,30 +451,31 @@
 							uint32_t rs1 = REG(rs1imm);
 							uint32_t writeval = rs1;
 
+							// Unimplemented on this processor:
+							
+							int tcsr = scratch00;
+							
 							// https://raw.githubusercontent.com/riscv/virtual-memory/main/specs/663-Svpbmt.pdf
 							// Generally, support for Zicsr
 							switch( csrno )
 							{
-							case 0x340: rval = CSR( mscratch ); break;
-							case 0x305: rval = CSR( mtvec ); break;
-							case 0x304: rval = CSR( mie ); break;
-							case 0xC00: rval = cycle; break;
-							case 0x344: rval = CSR( mip ); break;
-							case 0x341: rval = CSR( mepc ); break;
-							case 0x300: rval = CSR( mstatus ); break; //mstatus
-							case 0x342: rval = CSR( mcause ); break;
-							case 0x343: rval = CSR( mtval ); break;
-							case 0xf11: rval = 0xff0ff0ff; break; //mvendorid
-							case 0x301: rval = 0x40401101; break; //misa (XLEN=32, IMA+X)
-							//case 0x3B0: rval = 0; break; //pmpaddr0
-							//case 0x3a0: rval = 0; break; //pmpcfg0
-							//case 0xf12: rval = 0x00000000; break; //marchid
-							//case 0xf13: rval = 0x00000000; break; //mimpid
-							//case 0xf14: rval = 0x00000000; break; //mhartid
+							case 0x340: tcsr = mscratch; break;
+							case 0x305: tcsr = mtvec; break;
+							case 0x304: tcsr = mie; break;
+							case 0x344: tcsr = mip; break;
+							case 0x341: tcsr = mepc; break;
+							case 0x300: tcsr = mstatus; break; //mstatus
+							case 0x342: tcsr = mcause; break;
+							case 0x343: tcsr = mtval; break;
+							case 0xf11: SETCSR( scratch00, 0xff0ff0ff ); break; //mvendorid
+							case 0x301: SETCSR( scratch00, 0x40401101 ); break; //misa (XLEN=32, IMA+X)
+							case 0xC00: SETCSR( scratch00, cycle ); break;
 							default:
-								MINIRV32_OTHERCSR_READ( csrno, rval );
+								SETCSR( scratch00, MINIRV32_OTHERCSR_READ( csrno, rval ) );
 								break;
 							}
+							
+							rval = CSR( tcsr ); 
 
 							switch( microop )
 							{
@@ -473,28 +486,9 @@
 								case 6: writeval = rval | rs1imm; break;	//CSRRSI
 								case 7: writeval = rval & ~rs1imm; break;	//CSRRCI
 							}
+							
+							SETCSR( tcsr, writeval ); 
 
-							switch( csrno )
-							{
-							case 0x340: SETCSR( mscratch, writeval ); break;
-							case 0x305: SETCSR( mtvec, writeval ); break;
-							case 0x304: SETCSR( mie, writeval ); break;
-							case 0x344: SETCSR( mip, writeval ); break;
-							case 0x341: SETCSR( mepc, writeval ); break;
-							case 0x300: SETCSR( mstatus, writeval ); break; //mstatus
-							case 0x342: SETCSR( mcause, writeval ); break;
-							case 0x343: SETCSR( mtval, writeval ); break;
-							//case 0x3a0: break; //pmpcfg0
-							//case 0x3B0: break; //pmpaddr0
-							//case 0xf11: break; //mvendorid
-							//case 0xf12: break; //marchid
-							//case 0xf13: break; //mimpid
-							//case 0xf14: break; //mhartid
-							//case 0x301: break; //misa
-							default:
-								MINIRV32_OTHERCSR_WRITE( csrno, writeval );
-								break;
-							}
 						}
 						else if( microop == 0x0 ) // "SYSTEM" 0b000
 						{

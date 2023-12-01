@@ -34,35 +34,26 @@
 				uint4 block;
 				uint ct = 0;
 				uint i;
+				uint4 ret = 0;
 				for( i = 0; i < CACHE_N_WAY; i++ )
 				{
 					ct = cachesetsaddy[i+hash];
 					if( ct == blocknop1 )
 					{
 						// Found block.
-						return U4Select( cachesetsdata[(i+hash)], remainder4 );
+						ret = cachesetsdata[(i+hash)];
+						break;
 					}
 					else if( ct == 0 )
 					{
 						// else, no block found. Read data.
-						uint4assign( block, MainSystemAccess( blockno ) );
-						return U4Select( block, remainder4 );
+						ret = MainSystemAccess( blockno );
+						break;
 					}
 				}
-
-				if( i == CACHE_N_WAY )
-				{
-					// Reading after overfilled cache.
-					// Need to panic here.
-					// This should never ever happen.
-					//uint4assign( block, MainSystemAccess( blockno ) );
-					//return block[(ptr&0xf)>>2];
-					return 0;
-				}
-
-				// Not arrivable.
-				return 0;
+				return U4Select( ret, remainder4 );
 			}
+
 
 
 			// Store mem internal word (Only use if guaranteed word-alignment)
@@ -78,8 +69,7 @@
 				uint hashend = hash + CACHE_N_WAY;
 				uint4 block;
 				uint ct = 0;
-				
-				// Cache lines are 8-deep, by 16 bytes, with 128 possible cache addresses.
+
 				for( ; hash < hashend; hash++ )
 				{
 					ct = cachesetsaddy[hash];
@@ -89,7 +79,6 @@
 						cache_usage++;
 						uint4assign( cachesetsdata[hash], MainSystemAccess( blockno ) );
 
-						// Make sure there's enough room to flush processor state
 						if( hash == hashend-1 )
 						{
 							cache_usage = MAX_FCNT;

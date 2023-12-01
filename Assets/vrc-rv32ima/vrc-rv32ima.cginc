@@ -67,7 +67,7 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define stepstatus 48
 #define charout 49
 #define sleeps 50
-#define debug3 51
+#define scratch00 51
 
 
 #define CSR( x ) state[x]
@@ -77,7 +77,6 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 
 #define uint32_t uint
 #define int32_t  int
-
 
 #define INT32_MIN -2147483648
 #define AS_SIGNED(val) (asint(val))
