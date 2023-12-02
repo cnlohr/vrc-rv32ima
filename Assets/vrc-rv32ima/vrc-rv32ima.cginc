@@ -64,9 +64,9 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define mcause 46
 #define extraflags 47
 
-#define stepstatus 48
+#define stepinfo 48 /* Unused */
 #define charout 49
-#define sleeps 50
+#define cpucounter 50
 #define scratch00 51
 
 

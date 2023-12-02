@@ -137,16 +137,6 @@
 				
 				if( _SingleStep )
 				{
-					if( state[stepstatus] == 0 && _SingleStepGo )
-					{
-						state[stepstatus] = 1;
-					}
-					else
-					{
-						nogo = true;
-						if( !_SingleStepGo )
-							state[stepstatus] = 0;
-					}
 					count = 1;
 				}
 				else
@@ -181,6 +171,7 @@
 	if( CSR( extraflags ) & 4 )
 	{
 		ret = 1;
+		CSR( cpucounter ) = ( ( CSR( cpucounter ) + 1 ) & 0xffff ) | 0xffff0000;
 	}
 	else
 	{
@@ -188,6 +179,7 @@
 		uint32_t rval = 0;
 		uint32_t pc = CSR( pcreg );
 		uint32_t cycle = CSR( cyclel );
+		uint icount = 0;
 
 		if( ( CSR( mip ) & (1<<7) ) && ( CSR( mie ) & (1<<7) /*mtie*/ ) && ( CSR( mstatus ) & 0x8 /*mie*/) )
 		{
@@ -196,7 +188,7 @@
 			pc -= 4;
 		}
 		else // No timer interrupt?  Execute a bunch of instructions.
-		for( int icount = 0; icount < count; icount++ )
+		for( icount = 0; icount < count; icount++ )
 		{
 			uint32_t ir = 0;
 			rval = 0;
@@ -623,37 +615,12 @@
 		if( CSR( cyclel ) > cycle ) CSR( cycleh )++;
 		SETCSR( cyclel, cycle );
 		SETCSR( pcreg, pc );
+		CSR( cpucounter ) = CSR( cpucounter ) + 0x10000;
+
 	}
 
 					
 					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					// 0 means keep going if possible
-					// 1 means the processor needs to wait more time (waiting in timer interrupt) 
-					//	TODO: We can take advantage of this and just update the timer registers as part of this pass.
-					switch( ret )
-					{
-					case 0: // Normal operation, played through.
-						break;
-					case 1: // Waiting for timer interrupt.
-					{
-						CSR( sleeps ) = ( CSR( sleeps ) + 1 ) & 0xffffff;
-						break;
-					}
-					default:
-						break;
-					}
 				}
 
 				
@@ -673,8 +640,6 @@
 					}
 				}
 				
-				CSR( sleeps ) = (CSR( sleeps ) & 0x00ffffff) | ( pixelOutputID << 24 );
-
 				{
 					uint4 statealias[13];
 					for( i = 0; i < 13; i++ )
