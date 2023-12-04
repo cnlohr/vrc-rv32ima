@@ -16,11 +16,9 @@ public class rv32ima : UdonSharpBehaviour
 	public RenderTexture terminalInternal2;
 
 	public Material      loadImage;
-	
-	public Texture       mainTexture;
 
-	public Material      statistics;
-	public RenderTexture       statisticsTexture;
+	public Material       statistics;
+	public RenderTexture  statisticsTexture;
 	private RenderTexture statisticsBack;
 
 	private int frames;
@@ -28,7 +26,7 @@ public class rv32ima : UdonSharpBehaviour
 	private System.DateTime last;
 	private double lastTime = 0;
 	public double timeCompression = 0.1;
-	
+	private double statAdvance = 0;
 	private bool running = true;
 	private bool step = false;
 
@@ -39,15 +37,10 @@ public class rv32ima : UdonSharpBehaviour
 		systemWriter.SetVector( "_SystemMemorySize", new Vector4( systemMemory.width, systemMemory.height, 0, 0 ) );
 
 		terminalInternal.SetTexture( "_SystemMemory", systemMemory );
-		
-		VRCGraphics.Blit( mainTexture, systemMemory, loadImage, -1 );
-
-
-        statisticsBack = new RenderTexture(statisticsTexture.width, statisticsTexture.height, 1, statisticsTexture.graphicsFormat );
-        statisticsBack.Create();		
-
-		frames = 0;
+        statisticsBack = new RenderTexture(statisticsTexture.width, statisticsTexture.height, 1, RenderTextureFormat.ARGBInt );
+        statisticsBack.Create();
 		last = System.DateTime.Now;
+		Restart();
 	}
 
 	void Update()
@@ -82,7 +75,22 @@ public class rv32ima : UdonSharpBehaviour
 		System.DateTime now = System.DateTime.Now;
 		System.TimeSpan diff = System.DateTime.Now - last;
 		double elapsed = diff.TotalSeconds * timeCompression;
-
+		statAdvance += elapsed;
+		
+		if( statAdvance > 0.1 )
+		{
+			if( statAdvance > 0.2 )
+			{
+				statAdvance = 0;
+			}
+			else
+			{
+				statAdvance -= 0.1;
+			}
+			statistics.SetFloat( "_Advance", 1.0f );
+		}
+		
+		
 		computeMaterial.SetFloat( "_ElapsedTime", (float)(elapsed/do_iterations) );
 		statistics.SetTexture( "_CompLast", computeBuffer );
 
@@ -100,6 +108,7 @@ public class rv32ima : UdonSharpBehaviour
 			
 			statistics.SetTexture( "_LastStat", bIsOddFrame ? statisticsBack : statisticsTexture );
 			VRCGraphics.Blit( null, bIsOddFrame ? statisticsTexture : statisticsBack, statistics, -1 ); 
+			if( i == 0 ) statistics.SetFloat( "_Advance", 0.0f );
 			frames++;
 		}
 		
@@ -113,8 +122,19 @@ public class rv32ima : UdonSharpBehaviour
 
 	public void Restart()
 	{
-		VRCGraphics.Blit( mainTexture, systemMemory, loadImage, -1 ); 
 		frames = 0;
+		
+		bool bIsOddFrame = (frames & 1) != 0;
+
+		VRCGraphics.Blit( null, systemMemory, loadImage, -1 ); 
+
+		statistics.SetFloat( "_Reset", 1 );
+		statistics.SetTexture( "_LastStat", null );
+		VRCGraphics.Blit( null, statisticsTexture, statistics, -1 ); 
+		VRCGraphics.Blit( null, statisticsBack, statistics, -1 ); 
+		statistics.SetFloat( "_Reset", 0 );
+
+		last = System.DateTime.Now;
 		Debug.Log( "Loading System Memory: " + frames );
 	}
 

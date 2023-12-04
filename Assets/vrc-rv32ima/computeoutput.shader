@@ -14,7 +14,7 @@
 		Pass
 		{
 			ZTest Always 
-			//Blend One Zero
+			Blend One Zero
 
 			CGPROGRAM
 			
@@ -72,7 +72,6 @@
 
 			#include "vrc-rv32ima.cginc"			
 			#include "gpucache.h"
-			#include "mini-rv32ima.h"
 
 
 			struct appdata
@@ -171,7 +170,7 @@
 	if( CSR( extraflags ) & 4 )
 	{
 		ret = 1;
-		CSR( cpucounter ) = ( ( CSR( cpucounter ) + 1 ) & 0xffff ) | 0xffff0000;
+		CSR( cpucounter ) = ( ( CSR( cpucounter ) + 1 ) & 0xfff ) | ( CSR( cpucounter ) & 0xfffff000 );
 	}
 	else
 	{
@@ -292,7 +291,7 @@
 							uint expandbyte = ebtable[type_of_load];
 							uint ebor = -(expandbyte * 2);
 							rval = LoadMemInternal( rsval, btor );
-							rval |= -( (int)( rval & expandbyte ) << 1 ); // Compute bit-wise sign 2's compliment expansion
+							rval |= -( (int)( rval & expandbyte ) << 1 ); // Compute bit-wise sign 2's compliment expansion (automatic sign extension)
 							trap = ( btor == 0 ) ? (2+1) : 0;
 
 #elif 1
@@ -615,8 +614,7 @@
 		if( CSR( cyclel ) > cycle ) CSR( cycleh )++;
 		SETCSR( cyclel, cycle );
 		SETCSR( pcreg, pc );
-		CSR( cpucounter ) = CSR( cpucounter ) + 0x10000;
-
+		CSR( cpucounter ) =  ( CSR( cpucounter ) & 0xff000fff ) | ( ( CSR( cpucounter ) + 0x1000 ) & 0xfff000 );
 	}
 
 					
@@ -639,6 +637,8 @@
 						stream.Append(o);
 					}
 				}
+				
+				CSR( cpucounter ) = ( CSR( cpucounter ) & 0x00ffffff ) | ( pixelOutputID << 24 );
 				
 				{
 					uint4 statealias[13];

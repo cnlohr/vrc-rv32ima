@@ -19,6 +19,8 @@ Texture2D<uint4> _MainSystemMemory;
 
 #define MEMORY_BASE 0x80000000
 #define MEMORY_SIZE (MINI_RV32_RAM_SIZE)
+#define MINIRV32_RAM_IMAGE_OFFSET  0x80000000
+
 
 float4 _SystemMemorySize;
 
@@ -64,7 +66,7 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define mcause 46
 #define extraflags 47
 
-#define stepinfo 48 /* Unused */
+#define UNUSED 48 /* Unused */
 #define charout 49
 #define cpucounter 50
 #define scratch00 51
@@ -88,6 +90,30 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 static uint count;
 
 #define uint4assign( x, y ) x = y
+
+
+// Used for debugging
+
+#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
+
+float PrintHex2( uint val, float2 uv )
+{
+	uv.x = 1.0 - uv.x;
+	uv *= float2( 8, 7 );
+	int charno = uv.x/4;
+	int row = uv.y/7;
+	uint dig = (val >> (4-charno*4))&0xf;
+	return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+}
+float PrintHex8( uint4 val, float2 uv )
+{
+	uv *= float2( 32, 7*4 );
+	int charno = uv.x/4;
+	int row = uv.y/7;
+	uint dig = (val[3-(row&3)] >> (28-charno*4))&0xf;
+	return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+}
+
 
 
 #endif
