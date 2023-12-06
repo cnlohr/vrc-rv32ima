@@ -42,7 +42,7 @@
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainSystemMemory);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
 			
@@ -52,16 +52,21 @@
 				pcv /= 16;
 				float2 dpos = thisCoord - float2(
                     pcv % _MainSystemMemory_TexelSize.z,
-                    pcv / int(_MainSystemMemory_TexelSize.w)
+                    pcv / int( _MainSystemMemory_TexelSize.w )
                 ) - .5;
 				float pcdist = length( dpos );
-				float xclamp = max( 2.0-abs( dpos.x - dpos.y ), 2.0-abs( dpos.x + dpos.y ) );
-				return min( saturate( 10.0 - abs( 11.0 - pcdist ) ), saturate(xclamp) );
+                float fw = fwidth(thisCoord);
+                float cross_thickness = 1 + 2*fw;  // make it more crisp as you look closely
+				float cross = max( cross_thickness-abs( dpos.x - dpos.y ), cross_thickness-abs( dpos.x + dpos.y ) );
+
+                float sharpness = .5/fw;  // mathematical antialiasing
+                // set a min radius around the pixel and max radius around the cross
+                float circular_mask = saturate( sharpness*(10.0 - abs( 10.70710678118 - pcdist ) ));
+				return min(circular_mask, saturate( sharpness*cross ) );
 			}
 
             float4 frag (v2f i) : SV_Target
             {
-                // sample the texture
                 float4 col = _MainSystemMemory[i.uv*_MainSystemMemory_TexelSize.zw] / (float)(0xffffffff);
 				float2 thisCoord = i.uv * _MainSystemMemory_TexelSize.zw;
 
