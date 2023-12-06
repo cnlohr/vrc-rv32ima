@@ -54,14 +54,16 @@
                     pcv % _MainSystemMemory_TexelSize.z,
                     pcv / int( _MainSystemMemory_TexelSize.w )
                 ) - .5;
-				float pcdist = length( dpos );
-                float fw = fwidth(thisCoord);
+                float fw = fwidth( thisCoord );
                 float cross_thickness = 1 + 2*fw;  // make it more crisp as you look closely
-				float cross = max( cross_thickness-abs( dpos.x - dpos.y ), cross_thickness-abs( dpos.x + dpos.y ) );
+				float cross = max(
+                    cross_thickness - abs( dpos.x - dpos.y ),
+                    cross_thickness - abs( dpos.x + dpos.y )
+                );
 
-                float sharpness = .5/fw;  // mathematical antialiasing
+                float sharpness = 1/fw;  // mathematical antialiasing
                 // set a min radius around the pixel and max radius around the cross
-                float circular_mask = saturate( sharpness*(10.0 - abs( 10.70710678118 - pcdist ) ));
+                float circular_mask = saturate( sharpness*(10.0 - abs( 10.70710678118 - length( dpos ) ) ));
 				return min(circular_mask, saturate( sharpness*cross ) );
 			}
 
