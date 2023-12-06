@@ -46,7 +46,7 @@
                 return o;
             }
 			
-			float recoord( uint pcreg, float2 thisCoord )
+			float hitmarker( uint pcreg, float2 thisCoord )
 			{
 				uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] - 0x80000000;
 				pcv /= 16;
@@ -71,14 +71,14 @@
 				float2 thisCoord = i.uv * _MainSystemMemory_TexelSize.zw;
 
 				#if _DoOverlay
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 10, thisCoord ) );
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 11, thisCoord ) );
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 12, thisCoord ) );
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 13, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 10, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 11, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 12, thisCoord ) );
+					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 13, thisCoord ) );
 
-					col = lerp( col, float4( 1.0, 0.0, 0.0, 0.0 ), recoord( 32, thisCoord ) );
-					col = lerp( col, float4( 0.0, 0.0, 1.0, 0.0 ), recoord(  2, thisCoord ) );
-					col = lerp( col, float4( 0.0, 1.0, 1.0, 0.0 ), recoord(  4, thisCoord ) );
+					col = lerp( col, float4( 1.0, 0.0, 0.0, 0.0 ), hitmarker( 32, thisCoord ) );
+					col = lerp( col, float4( 0.0, 0.0, 1.0, 0.0 ), hitmarker(  2, thisCoord ) );
+					col = lerp( col, float4( 0.0, 1.0, 1.0, 0.0 ), hitmarker(  4, thisCoord ) );
 				#endif
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
