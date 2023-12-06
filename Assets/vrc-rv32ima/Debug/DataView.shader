@@ -50,8 +50,10 @@
 			{
 				uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] - 0x80000000;
 				pcv /= 16;
-				thisCoord += 0.25;
-				float2 dpos = thisCoord - float2( pcv % _MainSystemMemory_TexelSize.z, pcv / _MainSystemMemory_TexelSize.w );
+				float2 dpos = thisCoord - float2(
+                    pcv % _MainSystemMemory_TexelSize.z,
+                    pcv / int(_MainSystemMemory_TexelSize.w)
+                ) - .5;
 				float pcdist = length( dpos );
 				float xclamp = max( 2.0-abs( dpos.x - dpos.y ), 2.0-abs( dpos.x + dpos.y ) );
 				return min( saturate( 10.0 - abs( 11.0 - pcdist ) ), saturate(xclamp) );
@@ -62,9 +64,8 @@
                 // sample the texture
                 float4 col = _MainSystemMemory[i.uv*_MainSystemMemory_TexelSize.zw] / (float)(0xffffffff);
 				float2 thisCoord = i.uv * _MainSystemMemory_TexelSize.zw;
-				
+
 				#if _DoOverlay
-					#define pcreg 32
 					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 10, thisCoord ) );
 					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 11, thisCoord ) );
 					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), recoord( 12, thisCoord ) );
