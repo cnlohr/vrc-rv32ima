@@ -3,7 +3,7 @@
     Properties
     {
         _MainSystemMemory ("Texture", 2D) = "white" {}
-		[Toggle(_DoOverlay)] _DoOverlay( "Do Overlay", float ) = 1.0
+        [Toggle(_DoOverlay)] _DoOverlay( "Do Overlay", float ) = 1.0
     }
     SubShader
     {
@@ -17,7 +17,7 @@
             #pragma fragment frag
             // make fog work
             #pragma multi_compile_fog
-			#pragma multi_compile _ _DoOverlay
+            #pragma multi_compile _ _DoOverlay
             #include "UnityCG.cginc"
 
             struct appdata
@@ -45,18 +45,18 @@
                 UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
-			
-			float hitmarker( uint pcreg, float2 thisCoord )
-			{
-				uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] - 0x80000000;
-				pcv /= 16;
-				float2 dpos = thisCoord - float2(
+
+            float hitmarker( uint pcreg, float2 thisCoord )
+            {
+                uint pcv = _MainSystemMemory[uint2( pcreg/4, _MainSystemMemory_TexelSize.w - 1 )][pcreg%4] - 0x80000000;
+                pcv /= 16;
+                float2 dpos = thisCoord - float2(
                     pcv % _MainSystemMemory_TexelSize.z,
                     pcv / int( _MainSystemMemory_TexelSize.w )
                 ) - .5;
                 float fw = fwidth( thisCoord );
                 float cross_thickness = 1 + 2*fw;  // make it more crisp as you look closely
-				float cross = max(
+                float cross = max(
                     cross_thickness - abs( dpos.x - dpos.y ),
                     cross_thickness - abs( dpos.x + dpos.y )
                 );
@@ -64,24 +64,24 @@
                 float sharpness = 1/fw;  // mathematical antialiasing
                 // set a min radius around the pixel and max radius around the cross
                 float circular_mask = saturate( sharpness*(10.0 - abs( 10.70710678118 - length( dpos ) ) ));
-				return min(circular_mask, saturate( sharpness*cross ) );
-			}
+                return min(circular_mask, saturate( sharpness*cross ) );
+            }
 
             float4 frag (v2f i) : SV_Target
             {
                 float4 col = _MainSystemMemory[i.uv*_MainSystemMemory_TexelSize.zw] / (float)(0xffffffff);
-				float2 thisCoord = i.uv * _MainSystemMemory_TexelSize.zw;
+                float2 thisCoord = i.uv * _MainSystemMemory_TexelSize.zw;
 
-				#if _DoOverlay
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 10, thisCoord ) );
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 11, thisCoord ) );
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 12, thisCoord ) );
-					col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 13, thisCoord ) );
+                #if _DoOverlay
+                    col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 10, thisCoord ) );
+                    col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 11, thisCoord ) );
+                    col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 12, thisCoord ) );
+                    col = lerp( col, float4( 1.0, 1.0, 0.0, 0.0 ), hitmarker( 13, thisCoord ) );
 
-					col = lerp( col, float4( 1.0, 0.0, 0.0, 0.0 ), hitmarker( 32, thisCoord ) );
-					col = lerp( col, float4( 0.0, 0.0, 1.0, 0.0 ), hitmarker(  2, thisCoord ) );
-					col = lerp( col, float4( 0.0, 1.0, 1.0, 0.0 ), hitmarker(  4, thisCoord ) );
-				#endif
+                    col = lerp( col, float4( 1.0, 0.0, 0.0, 0.0 ), hitmarker( 32, thisCoord ) );
+                    col = lerp( col, float4( 0.0, 0.0, 1.0, 0.0 ), hitmarker(  2, thisCoord ) );
+                    col = lerp( col, float4( 0.0, 1.0, 1.0, 0.0 ), hitmarker(  4, thisCoord ) );
+                #endif
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
