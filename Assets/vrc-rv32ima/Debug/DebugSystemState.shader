@@ -20,20 +20,21 @@
 
 			#include "UnityCG.cginc"
 
-			#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
+//			#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
+			#include "/Assets/MSDFShaderPrintf/MSDFShaderPrintf.cginc"
+
 
 			Texture2D<uint4> _SystemMemory;
 			float4 _SystemMemory_TexelSize;
 			float4 _SystemMemory_ST;
 
-			float4 PrintHex( uint4 val, float2 uv )
+			float4 PrintHex( uint4 val, float2 uv, float4 grad )
 			{
-				uv *= float2( 32, 7 );
-				int charno = uv.x/4;
+				uv *= float2( 8, 1 );
+				int charno = uv.x;
 				int row = uv.y/7;
-				uint dig = (val[3-row] >> (28-charno*4))&0xf;
-				float hexchar = PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
-				return hexchar;
+				uint dig = (val[3-row] >> (28-charno*4))&0xf;				
+				return MSDFPrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4+uv.x+4, 1.0 - uv.y-row*7 ), grad ).xxxy;
 			}
 
 			struct appdata
@@ -70,6 +71,9 @@
 				uv.x = frac( uv );
 				float4 color = 0;
 
+				float4 grad = float4( ddx(uv), ddy(uv) );
+
+
 				if( uv.x < 0 )
 				{
 					color = 0;
@@ -85,7 +89,7 @@
 						uv *= float2( 8, 1 );
 						int char = uv.x;
 						uv = frac( uv );
-						uv.x = 1-uv.x;
+						uv.x = uv.x;
 						uint4 label[] = { 
 							uint4( 0, __x, __0, __COLON ),
 							uint4( 0, __r, __a, __COLON ),
@@ -199,8 +203,11 @@
 							float3( 0.0, 0.8, 0.0 ),
 							float3( 0.0, 0.8, 0.0 ),
 							};
-						uv *= float2( 4, 7 );
-						color = float4( tcol[group], 1.0 ) * PrintChar( label[group][char], uv, 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+						uv *= float2( 1, 1 );
+						uv.y = 1.0-uv.y;
+						color = float4( tcol[group], 1.0 ) * 
+							//PrintChar( label[group][char], uv, 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+							MSDFPrintChar( label[group][char], uv, grad ).xxxy;
 					}
 					else
 					{
@@ -208,19 +215,20 @@
 						uint4 cell = _SystemMemory.Load( uint3( mcell, _SystemMemory_TexelSize.w-1, 0 ) );
 						if( uv.x > 1 )
 						{
-							uv.x *= 32.0;
-							uint xcell = 12 - uv.x/4;
+							uv.x *= 8.0;
+							uint xcell = 12 - uv.x;
 							uint digpair = (cell[group%4]>>(xcell*8)) & 0xff; 
-							uv.y = frac( uv.y ) * 7.0;
+							uv.y = frac( uv.y );
+							uv.y = 1.0 - uv.y;
 							if( digpair )
 							{
-								float charness = PrintChar( digpair, float2( 4.0-frac(uv.x/4.0)*4.0, uv.y ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+								float charness = MSDFPrintChar( digpair, uv, grad ).xxxy;
 								color = charness * 0.2;
 							}
 						}
 						else
 						{
-							color = PrintHex( cell[group%4], frac(uv) );
+							color = PrintHex( cell[group%4], frac(uv), grad );
 						}
 					}
 				}

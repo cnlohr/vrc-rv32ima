@@ -14,7 +14,9 @@
 
         CGPROGRAM
 		
-		#include "..\AudioLink\Shaders\SmoothPixelFont.cginc"
+		//#include "..\AudioLink\Shaders\SmoothPixelFont.cginc"
+		#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
+
 		#include <UnityCG.cginc>
 		
         // Physically based Standard lighting model, and enable shadows on all light types

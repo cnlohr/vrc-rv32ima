@@ -1,12 +1,10 @@
-﻿Shader "rv32ima/loadimage"
+﻿Shader "rv32ima/loadimage-download"
 {
     Properties
     {
-		_MainTex( "Main Texture (Dummy)", 2D ) = "black" { }
-		_LinuxImage( "Linux Image", 2D ) = "black" { }
-		_DTBImage( "DTB Image", 2D ) = "black" { }
-
+		_ImportTexture( "PNG Image", 2D ) = "black" { }
 		_SystemMemorySize( "System Memory Size", Vector ) = ( 0, 0, 0, 0)
+		[ToggleUI] _DoNotSRGBConvert( "Do not SRGB convert", float ) = 0.0
     }
     SubShader
     {
@@ -26,24 +24,39 @@
 			#include "unitycg.cginc"
 			#include "vrc-rv32ima.cginc"
 
-			texture2D <float> _LinuxImage;
-			texture2D <float> _DTBImage;
-
-			uint Read4Bytes( texture2D< float > tex, uint2 bc )
+			texture2D <float4> _ImportTexture;
+			float _DoNotSRGBConvert;
+			
+			float4 ColorCorrect4( float4 value )
 			{
-				return ( ((uint)(tex[ bc + uint2(0,0) ]*255.5)) ) |
-				       ( ((uint)(tex[ bc + uint2(1,0) ]*255.5)) << 8 ) |
-					   ( ((uint)(tex[ bc + uint2(2,0) ]*255.5)) << 16 ) |
-					   ( ((uint)(tex[ bc + uint2(3,0) ]*255.5)) << 24 );
+				if( _DoNotSRGBConvert > 0.5 ) return value;
+				return float4(
+					LinearToGammaSpaceExact( value.x + 0.0001),
+					LinearToGammaSpaceExact( value.y + 0.0001),
+					LinearToGammaSpaceExact( value.z + 0.0001),
+					value.w );
+				return value;
+			}
+			
+			
+			uint4 Read4Bytes( texture2D< float4 > tex, uint2 bc )
+			{
+				return ColorCorrect4( tex.Load( int3( bc + uint2(0,0), 0 ) ) ) * 255.55;
 			}
 
-			uint4 Read16Bytes( texture2D< float > tex, uint2 bc )
+			uint4 Read16Bytes( texture2D< float4 > tex, uint2 bc )
 			{
-				return uint4(
-					Read4Bytes( tex, bc + uint2( 0, 0 ) ),
-					Read4Bytes( tex, bc + uint2( 4, 0 ) ),
-					Read4Bytes( tex, bc + uint2( 8, 0 ) ),
-					Read4Bytes( tex, bc + uint2( 12, 0 ) ) );
+				uint4 im0 = Read4Bytes( tex, bc + uint2( 0, 0 ) );
+				uint4 im1 = Read4Bytes( tex, bc + uint2( 1, 0 ) );
+				uint4 im2 = Read4Bytes( tex, bc + uint2( 2, 0 ) );
+				uint4 im3 = Read4Bytes( tex, bc + uint2( 3, 0 ) );
+				uint4 binrep = uint4(
+					(im0.a << 24) + (im0.b << 16) + (im0.g << 8) + (im0.r << 0),
+					(im1.a << 24) + (im1.b << 16) + (im1.g << 8) + (im1.r << 0),
+					(im2.a << 24) + (im2.b << 16) + (im2.g << 8) + (im2.r << 0),
+					(im3.a << 24) + (im3.b << 16) + (im3.g << 8) + (im3.r << 0)
+				);
+				return binrep;
 			}
 
 			struct appdata
@@ -78,29 +91,25 @@
 
 				uint TargetWidthBytes = _SystemMemorySize.x*4*4;
 
-				uint3 LinuxImageSize; _LinuxImage.GetDimensions( 0, LinuxImageSize.x, LinuxImageSize.y, LinuxImageSize.z );
-				uint LinuxImageBytes = (LinuxImageSize.x * LinuxImageSize.y);
-				uint LinuxImageWidthBytes = LinuxImageSize.x;
-				uint LinuxImageOHeight = ( LinuxImageBytes + TargetWidthBytes - 1 ) / TargetWidthBytes;
-
-				uint3 DTBImageSize; _DTBImage.GetDimensions( 0, DTBImageSize.x, DTBImageSize.y, DTBImageSize.z );
-				uint DTBImageBytes = (DTBImageSize.x * DTBImageSize.y);
-				uint DTBImageWidthBytes = DTBImageSize.x;
-				uint DTBImageOHeight = ( DTBImageBytes + TargetWidthBytes - 1 ) / TargetWidthBytes;
-
+				uint3 PNGImageSize; _ImportTexture.GetDimensions( 0, PNGImageSize.x, PNGImageSize.y, PNGImageSize.z );
+				uint PNGImageBytes = (PNGImageSize.x * PNGImageSize.y) * 4;
+				uint PNGImageWidthBytes = PNGImageSize.x * 4;
+				uint PNGImageOHeight = ( PNGImageBytes + TargetWidthBytes - 1 ) / TargetWidthBytes;
+				
 				// Load System Image
-				if( coord.y < LinuxImageOHeight )
+				if( coord.y < PNGImageOHeight )
 				{
 					uint4 ret = 0;
 					uint BaseMemoryAddressOfThisPixel = ( coord.y * _SystemMemorySize.x + coord.x ) * 4 * 4;
-					uint2 syscoord = uint2( BaseMemoryAddressOfThisPixel % LinuxImageWidthBytes, BaseMemoryAddressOfThisPixel / LinuxImageWidthBytes );
-					syscoord.y = LinuxImageSize.y - syscoord.y - 1;
+					uint2 syscoord = uint2( (BaseMemoryAddressOfThisPixel/4) % PNGImageWidthBytes, (BaseMemoryAddressOfThisPixel /4 ) / PNGImageWidthBytes );
+					syscoord.y = PNGImageSize.y - syscoord.y - 1;
 					//return _LinuxImage[ uint2( coord.x, LinuxImageSize.y - coord.y - 1) ];
-					return Read16Bytes( _LinuxImage, syscoord );
+					return Read16Bytes( _ImportTexture, syscoord );
 				}
 				
+
 				// Load the DTB + System Core
-				uint topbase = _SystemMemorySize.y - 1 - DTBImageOHeight;
+				uint topbase = _SystemMemorySize.y - 1;
 				if( coord.y >= topbase )
 				{
 					if( coord.y == (uint)_SystemMemorySize.y - 1 )
@@ -114,7 +123,7 @@
 							mepc, mtval, mcause, extraflags
 						*/
 						uint lpc = 0x80000000;
-						uint dtb_address = 0x80000000 + TargetWidthBytes * topbase;
+						uint dtb_address = 0x00000000; // 0x80000000 + TargetWidthBytes * topbase; (Normally)
 	
 						// Each color is 4 regs.
 						if( coord.x == 8 )
@@ -128,8 +137,8 @@
 							return uint4(
 								0x00000000, // x8
 								0x00000000, // x9
-								0x00000000, // x10 (hart ID)!!
-								dtb_address // x11 (DTB Pointer)
+								0x00000000, // x10 (hart ID)!!    (A0)
+								dtb_address // x11 (DTB Pointer, normally)  (A1)
 							);
 						else if( coord.x == 11 )
 							return uint4(
@@ -142,6 +151,7 @@
 							return 0x00000000;
 
 					}
+					/*
 					else
 					{
 						// DTB Load
@@ -150,7 +160,7 @@
 						uint2 syscoord = uint2( BaseMemoryAddressOfThisPixel % DTBImageWidthBytes, BaseMemoryAddressOfThisPixel / DTBImageWidthBytes );
 						syscoord.y = DTBImageSize.y - syscoord.y - 1;
 						return Read16Bytes( _DTBImage, syscoord );
-					}
+					}*/
 				}
 				
 				return 0x00000000;

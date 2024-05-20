@@ -6,6 +6,7 @@
 		[ToggleUI] _SingleStep( "Single Step Enable", float ) = 0.0
 		[ToggleUI] _SingleStepGo( "Single Step Go", float ) = 0.0
 		_ElapsedTime( "Elapsed Time", float ) = .0001
+		_SystemMemorySize( "System Memory Size", Vector ) = ( 0, 0, 0, 0)
 	}
 	SubShader
 	{
@@ -69,6 +70,7 @@
 			uint _SingleStepGo;
 			uint _SingleStep;
 			float _ElapsedTime;
+			float _FrameNumberIntAsFloat;
 
 			#include "vrc-rv32ima.cginc"			
 			#include "gpucache.h"

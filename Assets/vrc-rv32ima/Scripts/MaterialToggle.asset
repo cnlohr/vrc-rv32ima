@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: MaterialToggle
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 8231f4a592d249449b3aaad1651b090d,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 2f445c23d5ccd3a4cba90fb426cb5248,
     type: 2}
   udonAssembly: 
   assemblyError: 

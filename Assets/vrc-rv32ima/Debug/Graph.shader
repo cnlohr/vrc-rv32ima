@@ -22,6 +22,7 @@
 			#pragma multi_compile_local _ _ShowHex
 			#include "UnityCG.cginc"
 			#include "../vrc-rv32ima.cginc"
+			#include "/Assets/MSDFShaderPrintf/MSDFShaderPrintf.cginc"
 			
 			#pragma multi_compile_local _ _Debug
 			Texture2D<uint4> _Statistics;
@@ -69,7 +70,7 @@
 			#else
 				float2 graphuv = i.uv * float2( 1.0, _Fields );
 				uint field = floor( graphuv.y );
-				
+				graphuv.x *= 1.2;
 				
 				const float range[6] = { 1200, 1000, 30000, 300000, 400000, 1020 };
 				const float textshift[6] = { 8, 8, 8, 8, 8, 6 };
@@ -107,6 +108,8 @@
 				float inten = 1.0 - intenpos * width;
 				float4 color = saturate( lerp( 0.1, 1.0, inten ) );
 				
+				float4 grad = float4( ddx(graphuv), ddy(graphuv) ) * 5.0;
+
 				if( graphuv.y > 1.0 || graphuv.y < 0.0 )
 				{
 					color = float4( 0.1, 0.1, 0.1, 1. );
@@ -125,7 +128,7 @@
 					}
 					else if( thischar.y > 1.0 && thischar.y < 1.9 )
 					{
-						thischar.y -= 1.0;	
+						thischar.y -= 1.0;
 						uint charnum[6*8] = {
 							__S, __l, __e, __e, __p, __s, 0, 0,
 							__E, __x, __e, __c, __u, __t, __e, __s,
@@ -135,8 +138,8 @@
 							__C, __P, __U,  0, __P, __e, __r, __c,
 							};
 
-						float pc = PrintChar( charnum[uint(thischar.x) + field * 8], float2( 4.0, 0.0 ) + frac( thischar ) * float2( -4.0, 7.0), 10.0, 0.0 );
-							//, float PrintChar(uint charNum, float2 charUV, float2 softness, float offset)
+						thischar.y = 1.0 - thischar.y;
+						float pc = MSDFPrintChar(charnum[uint(thischar.x) + field * 8], float2( 4.0, 0.0 ) + frac( thischar ), grad).xxxy;
 						color = lerp( color, float4(1.0,1.0,1.0,1.0), pc );
 					}
 					else
@@ -145,10 +148,12 @@
 						int j;
 						for( j = 0; j < 10; j++ )
 							val += _Statistics[uint2( 2+j, rounddown.y )].y;
-						float dig = floor( thischar.x );
+						//float dig = floor( thischar.x );
+						thischar.x *= 1.0/8.0;
+						thischar.y = 1.0 - thischar.y;
 						val *= textscale[field];
-						float pc = PrintNumberOnLine(val, float2( 4.0, 0.0 ) + frac( thischar ) * float2( -4.0, 7.0), 10.0, dig, textshift[field], 5, false, 0.0 );
-						color = lerp( color, float4(1.0,1.0,1.0,1.0), pc );
+						float2 text = MSDFPrintNum( val, thischar, grad, 8, 4, 0, 3-textshift[field] );
+						color = lerp( color, text.xxxy, text.y );
 					}
 				}
 				

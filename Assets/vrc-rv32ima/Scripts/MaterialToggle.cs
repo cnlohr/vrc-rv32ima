@@ -3,7 +3,6 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using UnityEngine;
 
 public class MaterialToggle : UdonSharpBehaviour 
 {

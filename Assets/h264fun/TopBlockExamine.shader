@@ -19,7 +19,9 @@
 
             #include "UnityCG.cginc"
 
-			#include "..\AudioLink\Shaders\SmoothPixelFont.cginc"
+			//#include "..\AudioLink\Shaders\SmoothPixelFont.cginc"
+			#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
+
 		
             struct appdata
             {

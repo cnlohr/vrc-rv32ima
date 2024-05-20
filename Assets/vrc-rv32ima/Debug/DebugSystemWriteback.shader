@@ -20,22 +20,25 @@
 
 			#include "UnityCG.cginc"
 
-			#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
-
+			//#include "/Packages/com.llealloo.audiolink/Runtime/Shaders/SmoothPixelFont.cginc"
+			#include "/Assets/MSDFShaderPrintf/MSDFShaderPrintf.cginc"
+			
 			Texture2D<uint4> _ComputeOut;
 			float4 _ComputeOut_TexSize;
 			float4 _ComputeOut_ST;
 
-			float PrintHexHoriz( uint4 val, float2 uv )
+			float4 PrintHexHoriz( uint4 val, float2 uv, float4 grad )
 			{
 				uv = frac( uv );
-				uv *= float2( 36*4, 7 );
-				uint charno = uv.x/4;
-				if( charno%9 >= 8 ) return 0;
-				int row = uv.y/7;
-				uint dig = (val[uint(uv.x/36)] >> (28-(charno%9)*4))&0xf;
-				return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
-
+				uv *= float2( 36, 1 );
+				uint charno = uv.x;
+				int row = uv.y;
+				uv.y = 1.0 - uv.y;
+				uv.x = 1.0 - uv.x;
+				uint dig = (val[uint(charno/9)] >> (28-(charno%9)*4))&0xf;
+				if( charno%9 >= 8 ) dig = -55;
+				//return PrintChar( (dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), 2.0/(length( ddx( uv ) ) + length( ddy( uv ) )), 0.0);
+				return MSDFPrintChar((dig<10)?(dig+48):(dig+87), float2( charno*4-uv.x+4, uv.y-row*7 ), grad).xxxy;
 			}
 
 			struct appdata
@@ -66,7 +69,8 @@
 				_ComputeOut.GetDimensions( 0, w, h, d );
 				float2 tuv = i.uv * float2( h, w );
 				uint4 val = _ComputeOut.Load( uint3( w - uint( tuv.y ) - 1, uint( tuv.x ), 0 ) );
-				float4 col = PrintHexHoriz( val, tuv );
+				float4 grad = float4( ddx(tuv), ddy(tuv) );
+				float4 col = PrintHexHoriz( val, tuv, grad );
 				UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;
 			}

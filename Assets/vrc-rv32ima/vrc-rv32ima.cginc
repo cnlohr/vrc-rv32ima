@@ -1,8 +1,6 @@
 #ifndef VRC_RV32IMA
 #define VRC_RV32IMA
 
-
-
 #define MAXICOUNT    1024
 #define MAX_FCNT     48
 #define CACHE_BLOCKS 128
@@ -13,8 +11,13 @@ Texture2D<uint4> _MainSystemMemory;
 #define COMPUTE_OUT_X 64
 #define COMPUTE_OUT_Y 2
 
-#define SYSTEX_SIZE_X 1024
-#define SYSTEX_SIZE_Y 1024
+//XXX NOTE: Optimization: May want to hard-code this.
+
+#define SYSTEX_SIZE_X (uint)(_SystemMemorySize.x)
+#define SYSTEX_SIZE_Y (uint)(_SystemMemorySize.y)
+//#define SYSTEX_SIZE_X 1024
+//#define SYSTEX_SIZE_Y 1024
+
 #define MINI_RV32_RAM_SIZE (SYSTEX_SIZE_X*SYSTEX_SIZE_Y*16 - SYSTEX_SIZE_X*16)
 
 #define MEMORY_BASE 0x80000000
@@ -43,8 +46,9 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
 #define MINIRV32_STATE_DEFINTION inout uint state[52], 
 
-#define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 )  if( addy == 0x10000000 ) { state[charout] = rs2; icount = MAXICOUNT; }
-#define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = (rsval == 0x10000005)?0x60:0x00;
+#define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 ) if( addy == 0x10000000 ) { state[charout] = rs2; icount = MAXICOUNT; } else if( addy == 0x11000000 ) { if( rs2 == 1 ) icount = MAXICOUNT; } 
+#define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = (rsval == 0x10000005) ? 0x60 : ( rsval == 0x11000000 ) ? (MAXICOUNT-icount) : ( rsval == 0x11000001 ) ? _FrameNumberIntAsFloat : 0x00;
+//( rsval == 0x1100bff8 ) ? 12 : ( rsval == 0x1100bffc ) ? 34 : 0x00;
 
 #define MINIRV32_CUSTOM_INTERNALS
 #define MINIRV32_CUSTOM_STATE
