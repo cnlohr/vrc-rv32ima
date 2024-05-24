@@ -70,8 +70,6 @@
 			uint _SingleStepGo;
 			uint _SingleStep;
 			float _ElapsedTime;
-			float _FrameNumberIntAsFloat;
-
 			#include "vrc-rv32ima.cginc"			
 			#include "gpucache.h"
 

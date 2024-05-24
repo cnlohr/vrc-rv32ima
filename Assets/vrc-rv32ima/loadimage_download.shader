@@ -123,7 +123,8 @@
 							mepc, mtval, mcause, extraflags
 						*/
 						uint lpc = 0x80000000;
-						uint dtb_address = 0x00000000; // 0x80000000 + TargetWidthBytes * topbase; (Normally)
+						uint dtb_address = 0x00000000; // 0x80000000 + TargetWidthBytes * topbase; (Normally) (DTB not used here)
+						
 	
 						// Each color is 4 regs.
 						if( coord.x == 8 )
@@ -139,6 +140,13 @@
 								0x00000000, // x9
 								0x00000000, // x10 (hart ID)!!    (A0)
 								dtb_address // x11 (DTB Pointer, normally)  (A1)
+							);
+						else if( coord.x == 3 )
+							return uint4(
+								0x80000000 + _SystemMemorySize.x * ( _SystemMemorySize.y - 2 ) * 4 * 4, // x12 A2 - ENVCTRL
+								0x11100000, // x13 A3 - HOSTDAT
+								0x00000000, // x14
+								dtb_address // x15
 							);
 						else if( coord.x == 11 )
 							return uint4(

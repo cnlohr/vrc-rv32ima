@@ -25,6 +25,11 @@ Texture2D<uint4> _MainSystemMemory;
 #define MINIRV32_RAM_IMAGE_OFFSET  0x80000000
 
 
+float4 _GeneralArray[1023];
+float4 _PlayerArray[1023];
+float4 _BoneArray[1023];
+
+
 float4 _SystemMemorySize;
 
 // For intermediate outputs.
@@ -46,8 +51,25 @@ float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 #define MINIRV32_OTHERCSR_READ( csrno, rval ) rval = 0;
 #define MINIRV32_STATE_DEFINTION inout uint state[52], 
 
+uint GetHostInfo( uint rsval )
+{
+	uint pos = ((rsval)>>4) & 0x3ff;
+	uint select = (rsval>>2) & 0x3;
+	uint shift = ((rsval) & 0x3)*8;
+	float4 v = 0;
+	if( rsval < 0x1000 )
+		v = _GeneralArray[pos];
+	else if( rsval < 0x8000 )
+		v = _PlayerArray[pos];
+	else if( rsval < 0xc000 )
+		v = _BoneArray[pos];
+
+	return uint( int(v[select]))>>shift;
+}
+ 
 #define MINIRV32_HANDLE_MEM_STORE_CONTROL( addy, rs2 ) if( addy == 0x10000000 ) { state[charout] = rs2; icount = MAXICOUNT; } else if( addy == 0x11000000 ) { if( rs2 == 1 ) icount = MAXICOUNT; } 
-#define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = (rsval == 0x10000005) ? 0x60 : ( rsval == 0x11000000 ) ? (MAXICOUNT-icount) : ( rsval == 0x11000001 ) ? _FrameNumberIntAsFloat : 0x00;
+#define MINIRV32_HANDLE_MEM_LOAD_CONTROL( rsval, rval ) rval = (rsval == 0x10000005) ? 0x60 : ( rsval >= 0x11200000 && rsval < 0x11210000 ) ? GetHostInfo( rsval - 0x11200000 ) : 0x00
+
 //( rsval == 0x1100bff8 ) ? 12 : ( rsval == 0x1100bffc ) ? 34 : 0x00;
 
 #define MINIRV32_CUSTOM_INTERNALS
