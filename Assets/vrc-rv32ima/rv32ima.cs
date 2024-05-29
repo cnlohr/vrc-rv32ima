@@ -207,6 +207,39 @@ public class rv32ima : UdonSharpBehaviour
 			b = Vector3.Scale( (xformHand.rotation * Quaternion.Euler(0.0f, rotationangle, 0.0f) ) * Vector3.forward, vScale3 );
 			generalArray[5+currentHandID*2] = new Color( b.x, b.y, b.z, 0 );
 		}
+//TODO LATER Fix compile errors by working this in from Nestorboy
+  public static Ray GetLaserRay(bool inVR, bool useRightHand)
+{
+    VRCPlayerApi player = Networking.LocalPlayer;
+    if (!inVR)
+    {
+        var headData = player.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+        return new Ray(headData.position, headData.rotation * Vector3.forward);
+    }
+
+    var handData = player.GetTrackingData(useRightHand ?
+        VRCPlayerApi.TrackingDataType.RightHand :
+        VRCPlayerApi.TrackingDataType.LeftHand);
+    Quaternion handRot = handData.rotation;
+
+    // Manually measured local offsets.
+    #if !UNITY_ANDROID // Offsets differ for Android VR.
+        Vector3 localPosOffset = new Vector3(0.0185f, 0, .0506f);
+        Vector3 localRotOffsetDegrees = new Vector3(0f, 40f, 0f);
+    #else
+        Vector3 localPosOffset = new Vector3(.0079f, 0, .02125f);
+        Vector3 verticalOffsetDegrees = new Vector3(0f, 45f, 0f);
+    #endif
+    
+    float eyeHeightMeters = player.GetAvatarEyeHeightAsMeters();
+    Vector3 posOffset = localPosOffset * eyeHeightMeters;
+    Quaternion rotOffset = Quaternion.Euler(localRotOffsetDegrees);
+
+    Vector3 pos = handData.position + handRot * posOffset;
+    Quaternion rot = handRot * rotOffset;
+
+    return new Ray(pos, rot * Vector3.forward);
+}
 
 		{
 			Vector3 b = Vector3.Scale( localPlayer.GetBonePosition( HumanBodyBones.LeftIndexDistal ), vScale3 );
