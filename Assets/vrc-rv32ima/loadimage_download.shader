@@ -18,10 +18,11 @@
 			
 			#pragma vertex vert
 			#pragma fragment frag
-			
+			//#pragma skip_optimizations d3d11 opengl
+
 			#pragma target 5.0
 			
-			#include "unitycg.cginc"
+			#include "UnityCG.cginc"
 			#include "vrc-rv32ima.cginc"
 
 			texture2D <float4> _ImportTexture;

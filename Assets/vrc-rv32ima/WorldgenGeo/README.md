@@ -1,5 +1,7 @@
 # Geometry Output Device
 
+THIS PORTION OF THE PROJECT IS ABANDONED DO NOT USE.
+
 ## Genearal Layout
 
 Assuming the top row of the system memory texture is filled with CPU cores, the next row below that is the geometry descriptor layer.

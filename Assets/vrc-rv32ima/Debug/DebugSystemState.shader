@@ -3,6 +3,7 @@
 	Properties
 	{
 		_SystemMemory ("SystemMemory", 2D) = "white" {}
+		_ProcessorCount( "Processor Count", int ) = 1
 	}
 	SubShader
 	{
@@ -50,6 +51,8 @@
 				UNITY_FOG_COORDS(1)
 			};
 
+			uint _ProcessorCount;
+
 			v2f vert (appdata v)
 			{
 				v2f o;
@@ -62,6 +65,11 @@
 			float4 frag (v2f i) : SV_Target
 			{
 				float2 uv = i.uv;
+
+				uv.x *= _ProcessorCount;
+				int proc = floor( uv.x );
+				uv.x = frac( uv.x );
+
 				uv.x *= 2;
 				uv.y *= 26;
 				uint col = uv.x;
@@ -212,6 +220,8 @@
 					else
 					{
 						uint mcell = group/4;
+
+						mcell += proc * 16;
 						uint4 cell = _SystemMemory.Load( uint3( mcell, _SystemMemory_TexelSize.w-1, 0 ) );
 						if( uv.x > 1 )
 						{

@@ -20,10 +20,12 @@
 			
 			#pragma vertex vert
 			#pragma fragment frag
-			
+			//#pragma skip_optimizations d3d11 opengl
+
 			#pragma target 5.0
 			
-			#include "unitycg.cginc"
+
+			#include "UnityCG.cginc"
 			#include "vrc-rv32ima.cginc"
 
 			texture2D <float> _LinuxImage;
@@ -116,22 +118,25 @@
 						uint lpc = 0x80000000;
 						uint dtb_address = 0x80000000 + TargetWidthBytes * topbase;
 	
+						int cx = coord.x & 0xf;
+						int px = coord.x >> 4;
+
 						// Each color is 4 regs.
-						if( coord.x == 8 )
+						if( cx == 8 )
 							return uint4(
 								lpc,        // PC (Image offset)
 								0x00000000, // mstatus
 								0x00000000, // cyclel
 								0x00000000  // cycleh
 							);
-						else if( coord.x == 2 )
+						else if( cx == 2 )
 							return uint4(
 								0x00000000, // x8
 								0x00000000, // x9
-								0x00000000, // x10 (hart ID)!!
-								dtb_address // x11 (DTB Pointer)
+								px, // x10 (hart ID)!! (a0)
+								dtb_address // x11 (DTB Pointer) (a1)
 							);
-						else if( coord.x == 11 )
+						else if( cx == 11 )
 							return uint4(
 								0x00000000, // mepc
 								0x00000000, // mtval

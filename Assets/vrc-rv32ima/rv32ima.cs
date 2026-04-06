@@ -59,7 +59,6 @@ public class rv32ima : UdonSharpBehaviour
         statisticsBack.Create();
 		last = System.DateTime.Now;
 		
-		
 		if( imageIsDownloadable )
 			Redownload();
 		else
@@ -207,6 +206,7 @@ public class rv32ima : UdonSharpBehaviour
 			b = Vector3.Scale( (xformHand.rotation * Quaternion.Euler(0.0f, rotationangle, 0.0f) ) * Vector3.forward, vScale3 );
 			generalArray[5+currentHandID*2] = new Color( b.x, b.y, b.z, 0 );
 		}
+/*
 //TODO LATER Fix compile errors by working this in from Nestorboy
   public static Ray GetLaserRay(bool inVR, bool useRightHand)
 {
@@ -240,7 +240,7 @@ public class rv32ima : UdonSharpBehaviour
 
     return new Ray(pos, rot * Vector3.forward);
 }
-
+*/
 		{
 			Vector3 b = Vector3.Scale( localPlayer.GetBonePosition( HumanBodyBones.LeftIndexDistal ), vScale3 );
 			generalArray[8] = new Color( b.x, b.y, b.z, 0 );

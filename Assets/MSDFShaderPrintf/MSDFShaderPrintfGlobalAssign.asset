@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: MSDFShaderPrintfGlobalAssign
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: e21a9f13b2fea464e8a9207d743cb03b,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 7cd69110e18385880ad70bb4b3ed3b73,
     type: 2}
   udonAssembly: 
   assemblyError: 

@@ -2,14 +2,17 @@
 #define VRC_RV32IMA
 
 #define MAXICOUNT    1024
-#define MAX_FCNT     48
+#define MAX_FCNT     32
 #define CACHE_BLOCKS 128
 #define CACHE_N_WAY  4
 
 Texture2D<uint4> _MainSystemMemory;
 
-#define COMPUTE_OUT_X 64
-#define COMPUTE_OUT_Y 2
+uint _ProcessorCount;
+
+#define COMPUTE_OUT_X 48
+#define COMPUTE_OUT_Y (_ProcessorCount*2)
+
 
 //XXX NOTE: Optimization: May want to hard-code this.
 
@@ -38,8 +41,7 @@ static uint pixelOutputID;
 float4 ClipSpaceCoordinateOut( uint2 coordOut, float2 FlexCRTSize )
 {
 	// I believe these are equivelent. 
-	//return float4((coordOut.xy*float2(2,-2)+float2(-2.0*FlexCRTSize.x*0.5+1.5,FlexCRTSize.y-1.5))/FlexCRTSize, 0.5, 1 );
-	return float4( coordOut.xy*float2(1,-1)+float2(-FlexCRTSize.x/2+.5,FlexCRTSize.y/2-.5), 0, FlexCRTSize.x/2 );
+	return float4( (coordOut.xy*float2(1,-1)+float2(-FlexCRTSize.x/2+.5,FlexCRTSize.y/2-.5)) / (FlexCRTSize/2), 0, 1 );
 }
 
 #define MINIRV32_IMPLEMENTATION

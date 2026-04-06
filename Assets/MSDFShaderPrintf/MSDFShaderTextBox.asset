@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: MSDFShaderTextBox
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: f51ea52ec3badda42ae1c81488e1cb19,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: db418e252ca78ce81b60121bf3be4f0a,
     type: 2}
   udonAssembly: 
   assemblyError: 

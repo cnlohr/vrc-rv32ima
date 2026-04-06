@@ -7,6 +7,7 @@
 		[ToggleUI] _SingleStepGo( "Single Step Go", float ) = 0.0
 		_ElapsedTime( "Elapsed Time", float ) = .0001
 		_SystemMemorySize( "System Memory Size", Vector ) = ( 0, 0, 0, 0)
+		_ProcessorCount( "Processor Count", int ) = 1
 	}
 	SubShader
 	{
@@ -22,6 +23,7 @@
 			#pragma vertex vert
 			#pragma fragment frag
 			#pragma target 5.0
+			//#pragma skip_optimizations d3d11 opengl
 
 			struct appdata
 			{
@@ -38,6 +40,7 @@
 			{
 				v2f o;
 				o.vertex = UnityObjectToClipPos(IN.vertex);
+				o.batchID = 0;
 				return o;
 			}
 			
@@ -64,7 +67,7 @@
 			#pragma exclude_renderers d3d9	 // Just tried adding these because of a bgolus post to test,has no impact.
 			#pragma target 5.0
 
-			//#pragma skip_optimizations d3d11
+			//#pragma skip_optimizations d3d11 opengl
 			#pragma enable_d3d11_debug_symbols
 
 			uint _SingleStepGo;
@@ -81,7 +84,7 @@
 
 			struct v2g
 			{
-				//float4 vertex	: SV_POSITION;
+				float4 vertex	: SV_POSITION;
 				uint batchID	: TEXCOORD2;
 			};
 			
@@ -89,19 +92,21 @@
 			{
 				//XXX: TODO: Can we shrink this down and use Z to somehow indicate location, to reduce number of outputs required from geo?
 				float4 vertex : SV_POSITION;
-				uint4 color   : TEXCOORD0;				
+				uint4 color   : TEXCOORD0;
+				float pointSize : PSIZE;
 			};
 
 			v2g vert(appdata IN)
 			{
 				v2g OUT;
 				OUT.batchID = IN.vertexID;
+				OUT.vertex = 0.0;
 				return OUT;
 			}
 			
-			[maxvertexcount(128)]
-			[instance(1)]
-			void geo( point v2g input[1], inout PointStream<g2f> stream,
+			[maxvertexcount(COMPUTE_OUT_X*2)]
+			[instance(4)]
+			void geo( triangle v2g input[3], inout PointStream<g2f> stream,
 				uint instanceID : SV_GSInstanceID, uint geoPrimID : SV_PrimitiveID )
 			{
 			#if UNITY_SINGLE_PASS_STEREO
@@ -117,21 +122,6 @@
 
 				uint state[52] = (uint[52])0;
 
-				// Load state in from main ram.
-				uint4 v;
-				{
-					for( i = 0; i < 13; i++ )
-					{
-						uint4 v = _MainSystemMemory.Load( uint3( i, SYSTEX_SIZE_Y-1, 0 ) );
-						state[i*4+0] = v.x;
-						state[i*4+1] = v.y;
-						state[i*4+2] = v.z;
-						state[i*4+3] = v.w;
-					}
-				}
-				
-				state[charout] = 0;
-
 				bool nogo = false;
 				
 				if( _SingleStep )
@@ -143,8 +133,23 @@
 					count = MAXICOUNT;
 				}
 
-				int gid = geoPrimID*4 + instanceID*32;
-				if( gid != 0 ) return;
+				int gid = instanceID; ////geoPrimID*4 + instanceID*32;
+				if( gid >= _ProcessorCount ) return;
+
+				// Load state in from main ram.
+				uint4 v;
+				{
+					for( i = 0; i < 13; i++ )
+					{
+						uint4 v = _MainSystemMemory.Load( uint3( i + gid*16, SYSTEX_SIZE_Y-1, 0 ) );
+						state[i*4+0] = v.x;
+						state[i*4+1] = v.y;
+						state[i*4+2] = v.z;
+						state[i*4+3] = v.w;
+					}
+				}
+				
+				state[charout] = 0;
 
 
 				if( !nogo )
@@ -400,13 +405,15 @@
 							switch( (ir>>12)&7 ) //0x02000000 = RV32M
 							{
 								case 0: rval = rs1 * rs2; break; // MUL
-	#ifndef CUSTOM_MULH // If compiling on a system that doesn't natively, or via libgcc support 64-bit math.
+
+	#ifndef CUSTOM_MULH  // If compiling on a system that doesn't natively, or via libgcc support 64-bit math.
 								case 1: rval = ((int64_t)((int32_t)rs1) * (int64_t)((int32_t)rs2)) >> 32; break; // MULH
 								case 2: rval = ((int64_t)((int32_t)rs1) * (uint64_t)rs2) >> 32; break; // MULHSU
 								case 3: rval = ((uint64_t)rs1 * (uint64_t)rs2) >> 32; break; // MULHU
 	#else
 								CUSTOM_MULH
 	#endif
+
 								case 4: if( rs2 == 0 ) rval = -1; else rval = ((int32_t)rs1 == INT32_MIN && (int32_t)rs2 == -1) ? rs1 : ((int32_t)rs1 / (int32_t)rs2); break; // DIV
 								case 5: if( rs2 == 0 ) rval = 0xffffffff; else rval = rs1 / rs2; break; // DIVU
 								case 6: if( rs2 == 0 ) rval = rs1; else rval = ((int32_t)rs1 == INT32_MIN && (int32_t)rs2 == -1) ? 0 : ((uint32_t)((int32_t)rs1 % (int32_t)rs2)); break; // REM
@@ -461,6 +468,7 @@
 							case 0xf11: SETCSR( scratch00, 0xff0ff0ff ); break; //mvendorid
 							case 0x301: SETCSR( scratch00, 0x40401101 ); break; //misa (XLEN=32, IMA+X)
 							case 0xC00: SETCSR( scratch00, cycle ); break;
+							case 0xf10: tcsr = gid; break; // mhartid
 							default:
 								SETCSR( scratch00, MINIRV32_OTHERCSR_READ( csrno, rval ) );
 								break;
@@ -616,22 +624,22 @@
 		SETCSR( pcreg, pc );
 		CSR( cpucounter ) =  ( CSR( cpucounter ) & 0xff000fff ) | ( ( CSR( cpucounter ) + 0x1000 ) & 0xfff000 );
 	}
-
-					
+	
 					
 				}
 
-				
+				o.pointSize = 1;
+
 				for( i = 0; i < CACHE_BLOCKS; i++ )
 				{
 					uint a = cachesetsaddy[i];
 					if( a > 0 )
 					{
-						uint2 coordOut = uint2( pixelOutputID, 0 + gid * 2  );
+						uint2 coordOut = uint2( pixelOutputID, 0 + gid * 2 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
 						o.color = uint4(a, 0, 0, 0);
 						stream.Append(o);
-						coordOut = uint2( pixelOutputID++, 1 + gid * 2  );
+						coordOut = uint2( pixelOutputID++, 1 + gid * 2 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
 						o.color = cachesetsdata[i];
 						stream.Append(o);
@@ -646,20 +654,20 @@
 					{
 						statealias[i] = uint4( state[i*4+0], state[i*4+1], state[i*4+2], state[i*4+3] );
 
-						uint2 coordOut = uint2( 64-13+i, 0  + gid * 2  );
+						uint2 coordOut = uint2( COMPUTE_OUT_X-13+i, 0 + gid * 2 );
 						o.vertex = ClipSpaceCoordinateOut( coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
-						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i, instanceID, geoPrimID, 0);
+						o.color = uint4((MINI_RV32_RAM_SIZE)/16+1+i+gid*16, 0, 0, 0);
 						stream.Append(o);
-						coordOut = uint2( 64-13+i, 1 + gid * 2 );
+						coordOut = uint2( COMPUTE_OUT_X-13+i, 1 + gid * 2 );
 						o.vertex = ClipSpaceCoordinateOut(coordOut, float2(COMPUTE_OUT_X,COMPUTE_OUT_Y) );
 						o.color = statealias[i];
 						stream.Append(o);
 					}
 				}
+
 				
 				#endif
 			}
-
 
 			uint4 frag( g2f IN ) : SV_Target
 			{

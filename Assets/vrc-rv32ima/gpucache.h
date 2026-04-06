@@ -201,29 +201,62 @@
 
 			// From pi_maker's VRC RVC Linux
 			// https://github.com/PiMaker/rvc/blob/eb6e3447b2b54a07a0f90bb7c33612aeaf90e423/_Nix/rvc/src/emu.h#L255-L276
-			#define CUSTOM_MULH \
-				case 1: \
-				{ \
-				    /* FIXME: mulh-family instructions have to use double precision floating points internally atm... */ \
-					/* umul/imul (https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/umul--sm4---asm-)       */ \
-					/* do exist, but appear to be unusable?                                                           */ \
-					precise double op1 = int(rs1); \
-					precise double op2 = int(rs2); \
-					rval = (uint)((op1 * op2) / 4294967296.0l); /* '/ 4294967296' == '>> 32' */ \
-					break; \
-				} \
-				case 2: \
-				{ \
-					/* is the signed/unsigned stuff even correct? who knows... */ \
-					precise double op1 = int(rs1); \
-					precise double op2 = uint(rs2); \
-					rval = (uint)((op1 * op2) / 4294967296.0l); /* '/ 4294967296' == '>> 32' */ \
-					break; \
-				} \
-				case 3: \
-				{ \
-					precise double op1 = uint(rs1); \
-					precise double op2 = uint(rs2); \
-					rval = (uint)((op1 * op2) / 4294967296.0l); /* '/ 4294967296' == '>> 32' */ \
-					break; \
-				}
+//			#define CUSTOM_MULH \
+//				case 1: \
+//				{ \
+//				    /* FIXME: mulh-family instructions have to use double precision floating points internally atm... */ \
+//					/* umul/imul (https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/umul--sm4---asm-)       */ \
+//					/* do exist, but appear to be unusable?                                                           */ \
+//					precise double op1 = int(rs1); \
+//					precise double op2 = int(rs2); \
+//					rval = (uint)((op1 * op2) / 4294967296.0l); /* '/ 4294967296' == '>> 32' */ \
+//					break; \
+//				} \
+//				case 2: \
+//				{ \
+//					/* is the signed/unsigned stuff even correct? who knows... */ \
+//					precise double op1 = int(rs1); \
+//					precise double op2 = uint(rs2); \
+//					rval = (uint)((op1 * op2) / 4294967296.0l); /* '/ 4294967296' == '>> 32' */ \
+//					break; \
+//				} \
+//				case 3: \
+//				{ \
+//					precise double op1 = uint(rs1); \
+//					precise double op2 = uint(rs2); \
+//					rval = (uint)((op1 * op2) / 4294967296.0l); /* '/ 4294967296' == '>> 32' */ \
+//					break; \
+//				}
+
+
+
+
+uint mulh_long_comb( uint rs1, uint rs2, bool brs1sign, bool brs2sign )
+{
+	uint rs1lo = ( rs1 & 0xffff );
+	uint rs2lo = ( rs2 & 0xffff );
+	uint rs1hi = brs1sign?( (int)rs1 >> 16 ):( rs1 >> 16);
+	uint rs2hi = brs2sign?( (int)rs2 >> 16 ):( rs2 >> 16);
+
+	uint lowpart = rs1lo * rs2lo;
+	uint mid1 = rs1hi * rs2lo;
+	uint mid2 = rs1lo * rs2hi;
+	uint highpart = rs1hi * rs2hi;
+
+	// Bottom 16-bits of lowpart can be complete discarded.
+	// See if the bottom 32-bits overflows.
+	uint low16 = (lowpart >> 16) + (mid1 & 0xffff) + (mid2 & 0xffff );
+	uint loverflow = low16 >> 16;
+	uint product = loverflow;
+	product += ( brs1sign ) ? ((int)mid1 >> 16) : (mid1 >> 16);
+	product += ( brs2sign ) ? ((int)mid2 >> 16) : (mid2 >> 16);
+
+	return product + highpart;
+}
+
+#define CUSTOM_MULH \
+				case 1: rval = mulh_long_comb( rs1, rs2, true, true ); break; \
+				case 2: rval = mulh_long_comb( rs1, rs2, true, false ); break; \
+				case 3: rval = mulh_long_comb( rs1, rs2, false, false ); break;
+
+
