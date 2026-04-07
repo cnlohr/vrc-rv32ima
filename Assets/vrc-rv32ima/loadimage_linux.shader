@@ -133,7 +133,7 @@
 							return uint4(
 								0x00000000, // x8
 								0x00000000, // x9
-								px, // x10 (hart ID)!! (a0)
+								px, // x10 (hart ID) (a0)
 								dtb_address // x11 (DTB Pointer) (a1)
 							);
 						else if( cx == 11 )
