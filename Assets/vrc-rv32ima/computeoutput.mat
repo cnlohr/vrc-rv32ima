@@ -69,7 +69,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _ElapsedTime: 0.00079436664
+    - _ElapsedTime: 0.0010616
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
